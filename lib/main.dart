@@ -34,34 +34,112 @@ class RemStudioScreen extends StatefulWidget {
 }
 
 class _RemStudioScreenState extends State<RemStudioScreen> {
-  final List<String> options = ['1', '2', '3'];
-  final List<String> outsideValues = List.generate(7, (index) => '1');
-  final List<String> insideValues = List.generate(7, (index) => '1');
+  static const List<String> options = ['', 'X', 'P', 'FP']; // Add empty option
+  final List<String> outsideValues = List.generate(7, (index) => ''); // Empty by default
+  final List<String> insideValues = List.generate(7, (index) => ''); // Empty by default
+  final List<Map<String, dynamic>> steps = [];  // Store all steps
+
+  int? editingIndex; // Add editing state
+
+  void _addStep() {
+    setState(() {
+      if (editingIndex != null) {
+        // Update existing step
+        steps[editingIndex!] = {
+          'outsideValues': List<String>.from(outsideValues),
+          'insideValues': List<String>.from(insideValues),
+          'intensity': _currentIntensity,
+          'frequency': _currentFrequency,
+          'duration': _currentDuration,
+        };
+        editingIndex = null; // Exit edit mode
+      } else {
+        // Add new step
+        steps.add({
+          'outsideValues': List<String>.from(outsideValues),
+          'insideValues': List<String>.from(insideValues),
+          'intensity': _currentIntensity,
+          'frequency': _currentFrequency,
+          'duration': _currentDuration,
+        });
+      }
+    });
+  }
+
+  void _deleteStep(int index) {
+    setState(() {
+      steps.removeAt(index);
+    });
+  }
+
+  void _editStep(int index) {
+    final step = steps[index];
+    setState(() {
+      // Load values into editor
+      outsideValues.setAll(0, List<String>.from(step['outsideValues']));
+      insideValues.setAll(0, List<String>.from(step['insideValues']));
+      _currentIntensity = step['intensity'];
+      _currentFrequency = step['frequency'];
+      _currentDuration = step['duration'];
+      editingIndex = index; // Set editing mode
+    });
+  }
+
+  void _clearAllSteps() {
+    setState(() {
+      steps.clear();
+      editingIndex = null;
+      // Reset current values
+      outsideValues.fillRange(0, outsideValues.length, '');
+      insideValues.fillRange(0, insideValues.length, '');
+      _currentIntensity = 50;
+      _currentFrequency = 50;
+      _currentDuration = 2.5;
+    });
+  }
+
+  // Current values from sliders
+  double _currentIntensity = 50;
+  double _currentFrequency = 50;
+  double _currentDuration = 2.5;
+
+  void _updateSliderValues(String type, double value) {
+    setState(() {
+      switch (type) {
+        case 'intensity':
+          _currentIntensity = value;
+          break;
+        case 'frequency':
+          _currentFrequency = value;
+          break;
+        case 'duration':
+          _currentDuration = value;
+          break;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final double padding = size.width * 0.012;
-    final double containerRadius = size.width * 0.008;
-    final double nodeWidth = size.width * 0.075;
-    final double nodeHeight = size.height * 0.038;
-    final double sliderHeight = size.height * 0.20;
-    final double buttonWidth = size.width * 0.11;
-    final double buttonHeight = size.height * 0.038;
-    final double summaryHeight = size.height * 0.15;
+    final padding = size.width * 0.012;
+    final containerRadius = size.width * 0.008;
+    final nodeWidth = size.width * 0.075;
+    final nodeHeight = size.height * 0.038;
+    final sliderHeight = size.height * 0.20;
+    final buttonWidth = size.width * 0.11;
+    final buttonHeight = size.height * 0.038;
 
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
       body: Stack(
         children: [
-          // Background image for customize section
           Positioned.fill(
             child: Image.asset(
               'assets/bg.png',
               fit: BoxFit.cover,
             ),
           ),
-          // Optional: overlay for darkening
           Positioned.fill(
             child: Container(
               color: Colors.black.withOpacity(0.35),
@@ -72,11 +150,12 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
             child: Column(
               children: [
                 SizedBox(height: size.height * 0.012),
-                Text(
+                const Text(
                   'REM STUDIO',
+                  
                   style: TextStyle(
-                    fontSize: size.width * 0.022,
                     fontWeight: FontWeight.bold,
+                    fontSize: 32,
                     color: Colors.white,
                   ),
                 ),
@@ -99,13 +178,17 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           nodeHeight: nodeHeight,
                           sliderHeight: sliderHeight,
                           size: size,
+                          intensity: _currentIntensity,
+                          pulseFrequency: _currentFrequency,
+                          duration: _currentDuration,
+                          onIntensityChanged: (v) => _updateSliderValues('intensity', v),
+                          onFrequencyChanged: (v) => _updateSliderValues('frequency', v),
+                          onDurationChanged: (v) => _updateSliderValues('duration', v),
                         ),
                       ),
                       SizedBox(width: size.width * 0.015),
                       Expanded(
                         child: DottedCard(
-                          width: double.infinity,
-                          height: double.infinity,
                           borderRadius: containerRadius * 2,
                           child: Simulator(
                             padding: padding,
@@ -117,7 +200,6 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                       SizedBox(width: size.width * 0.015),
                       DottedCard(
                         width: buttonWidth + padding * 2,
-                        height: double.infinity,
                         borderRadius: containerRadius * 2,
                         child: ActionButtons(
                           padding: padding,
@@ -125,6 +207,9 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           buttonWidth: buttonWidth,
                           buttonHeight: buttonHeight,
                           size: size,
+                          onAddStep: _addStep,
+                          onClearAll: _clearAllSteps,
+                          isEditing: editingIndex != null, // Pass editing state
                         ),
                       ),
                     ],
@@ -132,13 +217,14 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                 ),
                 SizedBox(height: size.height * 0.012),
                 DottedCard(
-                  width: double.infinity,
+                  borderRadius: containerRadius * 2,
                   child: Padding(
                     padding: EdgeInsets.all(padding),
                     child: PatternSummary(
                       size: size,
-                      outsideValues: outsideValues,
-                      insideValues: insideValues,
+                      steps: steps,
+                      onDeleteStep: _deleteStep,
+                      onEditStep: _editStep,
                     ),
                   ),
                 ),

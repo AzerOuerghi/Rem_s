@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dotted_card.dart';
 
-class PatternEditor extends StatelessWidget {
+class PatternEditor extends StatefulWidget {
   final List<String> options;
   final List<String> outsideValues;
   final List<String> insideValues;
@@ -13,6 +13,12 @@ class PatternEditor extends StatelessWidget {
   final double nodeHeight;
   final double sliderHeight;
   final Size size;
+  final double intensity;
+  final double pulseFrequency;
+  final double duration;
+  final Function(double) onIntensityChanged;
+  final Function(double) onFrequencyChanged;
+  final Function(double) onDurationChanged;
 
   const PatternEditor({
     super.key,
@@ -27,7 +33,20 @@ class PatternEditor extends StatelessWidget {
     required this.nodeHeight,
     required this.sliderHeight,
     required this.size,
+    required this.intensity,
+    required this.pulseFrequency,
+    required this.duration,
+    required this.onIntensityChanged,
+    required this.onFrequencyChanged,
+    required this.onDurationChanged,
   });
+
+  @override
+  State<PatternEditor> createState() => _PatternEditorState();
+}
+
+class _PatternEditorState extends State<PatternEditor> {
+  final List<String> dropdownOptions = ['X', 'P', 'FP'];
 
   @override
   Widget build(BuildContext context) {
@@ -35,9 +54,9 @@ class PatternEditor extends StatelessWidget {
       child: Column(
         children: [
           DottedCard(
-            borderRadius: containerRadius,
+            borderRadius: widget.containerRadius,
             child: Padding(
-              padding: EdgeInsets.all(padding),
+              padding: EdgeInsets.all(widget.padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -48,13 +67,13 @@ class PatternEditor extends StatelessWidget {
                           style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
-                              fontSize: size.width * 0.014)),
+                              fontSize: widget.size.width * 0.014)),
                       Row(
                         children: [
                           Text('BACKREST',
                               style: TextStyle(
                                   color: Colors.white70,
-                                  fontSize: size.width * 0.010)),
+                                  fontSize: widget.size.width * 0.010)),
                           Switch(
                             value: true,
                             onChanged: (_) {},
@@ -63,7 +82,7 @@ class PatternEditor extends StatelessWidget {
                           Text('CUSHION',
                               style: TextStyle(
                                   color: Colors.white70,
-                                  fontSize: size.width * 0.010)),
+                                  fontSize: widget.size.width * 0.010)),
                         ],
                       ),
                     ],
@@ -73,11 +92,11 @@ class PatternEditor extends StatelessWidget {
               ),
             ),
           ),
-          SizedBox(height: size.height * 0.012),
+          SizedBox(height: widget.size.height * 0.008),
           DottedCard(
-            borderRadius: containerRadius,
+            borderRadius: widget.containerRadius,
             child: Padding(
-              padding: EdgeInsets.all(padding),
+              padding: EdgeInsets.all(widget.padding),
               child: _buildSliders(),
             ),
           ),
@@ -92,40 +111,42 @@ class PatternEditor extends StatelessWidget {
       children: [
         Text('Outside Nodes:',
             style: TextStyle(
-                color: Colors.white70, fontSize: size.width * 0.009)),
-        SizedBox(height: size.height * 0.006),
+                color: Colors.white70, fontSize: widget.size.width * 0.009)),
+        SizedBox(height: widget.size.height * 0.006),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: List.generate(7, (index) {
               return Padding(
-                padding: EdgeInsets.only(right: size.width * 0.005),
+                padding: EdgeInsets.only(right: widget.size.width * 0.005),
                 child: Container(
-                  width: nodeWidth,
-                  height: nodeHeight,
-                  padding: EdgeInsets.symmetric(horizontal: size.width * 0.007),
+                  width: widget.nodeWidth,
+                  height: widget.nodeHeight,
+                  padding: EdgeInsets.symmetric(horizontal: widget.size.width * 0.007),
                   decoration: BoxDecoration(
                     color: Colors.green.shade800.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(size.width * 0.008),
+                    borderRadius: BorderRadius.circular(widget.size.width * 0.008),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: outsideValues[index],
+                      value: widget.outsideValues[index].isEmpty ? '' : widget.outsideValues[index],
                       dropdownColor: Colors.green.shade900.withOpacity(0.9),
                       isExpanded: true,
                       icon: Icon(Icons.arrow_drop_down,
-                          color: Colors.white, size: size.width * 0.018),
-                      style: TextStyle(fontSize: size.width * 0.009),
-                      items: options.map((String value) {
+                          color: Colors.white, size: widget.size.width * 0.018),
+                      style: TextStyle(fontSize: widget.size.width * 0.009),
+                      items: widget.options.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text('OUT${index + 1}: $value',
-                              style: const TextStyle(color: Colors.white)),
+                          child: Text(
+                            value.isEmpty ? 'OUT${index + 1}' : 'OUT${index + 1}: $value',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
-                          onOutsideChanged(index, newValue);
+                          widget.onOutsideChanged(index, newValue);
                         }
                       },
                     ),
@@ -135,43 +156,45 @@ class PatternEditor extends StatelessWidget {
             }),
           ),
         ),
-        SizedBox(height: size.height * 0.008),
+        SizedBox(height: widget.size.height * 0.008),
         Text('Inside Nodes:',
             style: TextStyle(
-                color: Colors.white70, fontSize: size.width * 0.009)),
-        SizedBox(height: size.height * 0.006),
+                color: Colors.white70, fontSize: widget.size.width * 0.009)),
+        SizedBox(height: widget.size.height * 0.006),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: Row(
             children: List.generate(7, (index) {
               return Padding(
-                padding: EdgeInsets.only(right: size.width * 0.005),
+                padding: EdgeInsets.only(right: widget.size.width * 0.005),
                 child: Container(
-                  width: nodeWidth,
-                  height: nodeHeight,
-                  padding: EdgeInsets.symmetric(horizontal: size.width * 0.007),
+                  width: widget.nodeWidth,
+                  height: widget.nodeHeight,
+                  padding: EdgeInsets.symmetric(horizontal: widget.size.width * 0.007),
                   decoration: BoxDecoration(
                     color: Colors.purple.shade800.withOpacity(0.6),
-                    borderRadius: BorderRadius.circular(size.width * 0.008),
+                    borderRadius: BorderRadius.circular(widget.size.width * 0.008),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      value: insideValues[index],
+                      value: widget.insideValues[index].isEmpty ? '' : widget.insideValues[index],
                       dropdownColor: Colors.purple.shade900.withOpacity(0.9),
                       isExpanded: true,
                       icon: Icon(Icons.arrow_drop_down,
-                          color: Colors.white, size: size.width * 0.018),
-                      style: TextStyle(fontSize: size.width * 0.009),
-                      items: options.map((String value) {
+                          color: Colors.white, size: widget.size.width * 0.018),
+                      style: TextStyle(fontSize: widget.size.width * 0.009),
+                      items: widget.options.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
-                          child: Text('IN${index + 1}: $value',
-                              style: const TextStyle(color: Colors.white)),
+                          child: Text(
+                            value.isEmpty ? 'IN${index + 1}' : 'IN${index + 1}: $value',
+                            style: const TextStyle(color: Colors.white),
+                          ),
                         );
                       }).toList(),
                       onChanged: (String? newValue) {
                         if (newValue != null) {
-                          onInsideChanged(index, newValue);
+                          widget.onInsideChanged(index, newValue);
                         }
                       },
                     ),
@@ -189,30 +212,121 @@ class PatternEditor extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        _buildVerticalSlider('INTENSITY'),
-        _buildVerticalSlider('PULSE\nFREQUENCY'),
-        _buildVerticalSlider('DURATION/STEP'),
+        _verticalSlider(
+          value: widget.intensity,
+          min: 0,
+          max: 100,
+          divisions: 20,
+          onChanged: widget.onIntensityChanged,
+          label: 'INTENSITY',
+          unit: '(%)',
+          valueLabel: widget.intensity.round().toString(),
+          subLabel: '',
+        ),
+        _verticalSlider(
+          value: widget.pulseFrequency,
+          min: 0,
+          max: 100,
+          divisions: 20,
+          onChanged: widget.onFrequencyChanged,
+          label: 'PULSE FREQUENCY',
+          unit: '(Hz)',
+          valueLabel: widget.pulseFrequency.round().toString(),
+          subLabel: '',
+        ),
+        _verticalSlider(
+          value: widget.duration,
+          min: 0,
+          max: 5,
+          divisions: 10,
+          onChanged: widget.onDurationChanged,
+          label: 'DURATION / STEP',
+          unit: '(ms)',
+          valueLabel: widget.duration.toStringAsFixed(2),
+          subLabel: '',
+        ),
       ],
     );
   }
 
-  Widget _buildVerticalSlider(String label) {
-    return Column(
-      children: [
-        Text(label,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: size.width * 0.009)),
-        SizedBox(
-          height: sliderHeight,
-          child: RotatedBox(
-            quarterTurns: -1,
-            child: Slider(
-              value: 0.5,
-              onChanged: (_) {},
+  Widget _verticalSlider({
+    required double value,
+    required double min,
+    required double max,
+    required int divisions,
+    required ValueChanged<double> onChanged,
+    required String label,
+    required String unit,
+    required String valueLabel,
+    required String subLabel,
+  }) {
+    final sliderHeight = widget.size.height * 0.13;
+    final sliderWidth = widget.size.width * 0.08; // Reduced width since we removed axis
+
+    return SizedBox(
+      width: sliderWidth,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Title
+          Text(label, style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: widget.size.width * 0.009,
+          )),
+          Text(unit, style: TextStyle(
+            color: Colors.white70,
+            fontSize: widget.size.width * 0.007,
+            fontStyle: FontStyle.italic,
+          )),
+          const SizedBox(height: 4),
+          // Value display
+          Container(
+            margin: const EdgeInsets.only(bottom: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              border: Border.all(color: Colors.white24),
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: Text(
+              '#$valueLabel',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: widget.size.width * 0.010,
+              ),
             ),
           ),
-        ),
-      ],
+          // Slider
+          SizedBox(
+            height: sliderHeight,
+            child: Center(
+              child: RotatedBox(
+                quarterTurns: -1,
+                child: SliderTheme(
+                  data: SliderTheme.of(context).copyWith(
+                    trackHeight: 3,
+                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 7),
+                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+                    activeTrackColor: Colors.white,
+                    inactiveTrackColor: Colors.white24,
+                    thumbColor: Colors.white,
+                    overlayColor: Colors.white24,
+                  ),
+                  child: Slider(
+                    value: value,
+                    min: min,
+                    max: max,
+                    divisions: divisions,
+                    onChanged: onChanged,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
