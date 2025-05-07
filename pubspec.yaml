@@ -9,13 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  clay_containers: ^0.3.2
-  cupertino_icons: ^1.0.2
+  path_provider: ^2.0.12
+  file_picker: ^5.2.3
+  flutter_lints: ^5.0.0
+  flutter_neumorphic: ^3.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true

@@ -8,6 +8,7 @@ class ActionButtons extends StatelessWidget {
   final Size size;
   final VoidCallback onAddStep;
   final VoidCallback onClearAll;
+  final VoidCallback onExport;
   final bool isEditing;
 
   const ActionButtons({
@@ -19,6 +20,7 @@ class ActionButtons extends StatelessWidget {
     required this.size,
     required this.onAddStep,
     required this.onClearAll,
+    required this.onExport,
     this.isEditing = false,
   });
 
@@ -32,7 +34,7 @@ class ActionButtons extends StatelessWidget {
           SizedBox(height: size.height * 0.01),
           _buildButton(isEditing ? 'UPDATE STEP' : 'ADD STEP', onAddStep),
           _buildButton('CLEAR ALL', () => _showClearConfirmation(context)),
-          _buildButton('EXPORT', () {}),
+          _buildButton('EXPORT', onExport),
           _buildButton('SIMULATE', () {}),
         ],
       ),
