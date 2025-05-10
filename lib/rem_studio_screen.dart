@@ -9,6 +9,7 @@ import 'components/simulator.dart';
 import 'components/action_buttons.dart';
 import 'components/pattern_summary.dart';
 import 'components/dotted_card.dart';
+import 'components/fullscreen_simulator.dart';
 
 class RemStudioScreen extends StatefulWidget {
   const RemStudioScreen({super.key});
@@ -141,6 +142,37 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
     });
   }
 
+  void _showSimulator() {
+    final size = MediaQuery.of(context).size;
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          width: size.width * 0.7,
+          height: size.height * 0.8,
+          decoration: BoxDecoration(
+            color: const Color(0xFF111111),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white24),
+          ),
+          child: Simulator(
+            padding: size.width * 0.012,
+            containerRadius: size.width * 0.008,
+            size: Size(size.width * 0.7, size.height * 0.8),
+            outsideValues: outsideValues,
+            insideValues: insideValues,
+            steps: steps,
+            isModal: true,  // This will use modal positions
+            // Or provide custom positions:
+            // customOutsidePositions: [your custom positions],
+            // customInsidePositions: [your custom positions],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -217,6 +249,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                             size: size,
                             outsideValues: outsideValues,
                             insideValues: insideValues,
+                            steps: steps,
                           ),
                         ),
                       ),
@@ -233,6 +266,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           onAddStep: _addStep,
                           onClearAll: _clearAllSteps,
                           onExport: _exportSteps,
+                          onSimulate: _showSimulator,
                           isEditing: editingIndex != null,
                         ),
                       ),
