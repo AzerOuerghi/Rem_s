@@ -215,6 +215,8 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                             padding: padding,
                             containerRadius: containerRadius,
                             size: size,
+                            outsideValues: outsideValues,
+                            insideValues: insideValues,
                           ),
                         ),
                       ),
