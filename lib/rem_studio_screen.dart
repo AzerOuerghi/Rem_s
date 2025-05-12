@@ -25,6 +25,8 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   final List<Map<String, dynamic>> steps = [];
 
   int? editingIndex;
+  int? activePointIndex;
+  bool isOutsideActive = true;
 
   void _addStep() {
     setState(() {
@@ -173,6 +175,13 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
     );
   }
 
+  void _handlePointFocus(int? index, bool isOutside) {
+    setState(() {
+      activePointIndex = index;
+      isOutsideActive = isOutside;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -237,6 +246,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           onIntensityChanged: (v) => _updateSliderValues('intensity', v),
                           onFrequencyChanged: (v) => _updateSliderValues('frequency', v),
                           onDurationChanged: (v) => _updateSliderValues('duration', v),
+                          onPointFocus: _handlePointFocus,
                         ),
                       ),
                       SizedBox(width: size.width * 0.015),
@@ -250,6 +260,8 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                             outsideValues: outsideValues,
                             insideValues: insideValues,
                             steps: steps,
+                            activePointIndex: activePointIndex,
+                            isOutsideActive: isOutsideActive,
                           ),
                         ),
                       ),
