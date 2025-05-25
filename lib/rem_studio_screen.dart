@@ -1,9 +1,7 @@
 import 'dart:convert';
-import 'dart:io' show File;
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'dart:html' as html;
+import 'utils/file_export.dart';
 import 'components/pattern_editor.dart';
 import 'components/simulator.dart';
 import 'components/action_buttons.dart';
@@ -25,8 +23,6 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   final List<Map<String, dynamic>> steps = [];
 
   int? editingIndex;
-  int? activePointIndex;
-  bool isOutsideActive = true;
 
   void _addStep() {
     setState(() {
@@ -87,34 +83,12 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
       return;
     }
 
-    final jsonSteps = jsonEncode(steps);
-
-    if (kIsWeb) {
-      final bytes = utf8.encode(jsonSteps);
-      final blob = html.Blob([bytes], 'application/json');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', 'massage_steps.json')
-        ..click();
-      html.Url.revokeObjectUrl(url);
-      _showMessage('Steps exported (see your downloads).');
-    } else {
-      try {
-        final result = await FilePicker.platform.saveFile(
-          dialogTitle: 'Save Massage Steps',
-          fileName: 'massage_steps.json',
-          type: FileType.custom,
-          allowedExtensions: ['json'],
-        );
-
-        if (result != null) {
-          final file = File(result);
-          await file.writeAsString(jsonSteps);
-          _showMessage('Steps exported successfully!');
-        }
-      } catch (e) {
-        _showMessage('Failed to export steps: $e');
-      }
+    try {
+      final jsonSteps = jsonEncode(steps);
+      await FileExportUtil.instance.exportJson(jsonSteps, 'massage_steps.json');
+      _showMessage('Steps exported successfully!');
+    } catch (e) {
+      _showMessage('Failed to export steps: $e');
     }
   }
 
@@ -173,13 +147,6 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
         ),
       ),
     );
-  }
-
-  void _handlePointFocus(int? index, bool isOutside) {
-    setState(() {
-      activePointIndex = index;
-      isOutsideActive = isOutside;
-    });
   }
 
   @override
@@ -246,7 +213,6 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           onIntensityChanged: (v) => _updateSliderValues('intensity', v),
                           onFrequencyChanged: (v) => _updateSliderValues('frequency', v),
                           onDurationChanged: (v) => _updateSliderValues('duration', v),
-                          onPointFocus: _handlePointFocus,
                         ),
                       ),
                       SizedBox(width: size.width * 0.015),
@@ -260,8 +226,6 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                             outsideValues: outsideValues,
                             insideValues: insideValues,
                             steps: steps,
-                            activePointIndex: activePointIndex,
-                            isOutsideActive: isOutsideActive,
                           ),
                         ),
                       ),

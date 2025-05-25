@@ -13,8 +13,6 @@ class Simulator extends StatefulWidget {
   final List<Offset>? customOutsidePositions;
   final List<Offset>? customInsidePositions;
   final double? pointSize;
-  final int? activePointIndex;
-  final bool isOutsideActive;
 
   const Simulator({
     super.key,
@@ -28,8 +26,6 @@ class Simulator extends StatefulWidget {
     this.customOutsidePositions,
     this.customInsidePositions,
     this.pointSize,
-    this.activePointIndex,
-    this.isOutsideActive = true,
   });
 
   @override
@@ -139,20 +135,6 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
   }
 
   bool isPointActive(String value) => value == 'P' || value == 'FP';
-
-  bool isPointHighlighted(int index, bool isOutside) {
-    return widget.activePointIndex == index && 
-           widget.isOutsideActive == isOutside;
-  }
-
-  Color getPointColor(bool isOutside, int index, bool active, double intensity) {
-    if (isPointHighlighted(index, isOutside)) {
-      return Colors.white.withOpacity(0.2);
-    }
-    if (!active) return Colors.transparent;
-    return (isOutside ? Colors.green : Colors.purple)
-        .withOpacity(0.3 + (intensity / 200));
-  }
 
   void toggleSimulation() {
     setState(() {
@@ -333,12 +315,9 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
                             width: activePointSize,
                             height: activePointSize,
                             decoration: BoxDecoration(
-                              color: getPointColor(
-                                true, 
-                                index, 
-                                isPointActive(outsideValues[index]),
-                                intensity
-                              ),
+                              color: isPointActive(outsideValues[index])
+                                  ? Colors.green.withOpacity(0.3 + (intensity / 200))
+                                  : Colors.white.withOpacity(0.1),
                               shape: BoxShape.circle,
                               boxShadow: isPointActive(outsideValues[index])
                                   ? [
@@ -366,12 +345,9 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
                             width: activePointSize,
                             height: activePointSize,
                             decoration: BoxDecoration(
-                              color: getPointColor(
-                                false, 
-                                index, 
-                                isPointActive(insideValues[index]),
-                                intensity
-                              ),
+                              color: isPointActive(insideValues[index])
+                                  ? Colors.purple.withOpacity(0.3 + (intensity / 200))
+                                  : Colors.white.withOpacity(0.1),
                               shape: BoxShape.circle,
                               boxShadow: isPointActive(insideValues[index])
                                   ? [

@@ -19,7 +19,6 @@ class PatternEditor extends StatefulWidget {
   final Function(double) onIntensityChanged;
   final Function(double) onFrequencyChanged;
   final Function(double) onDurationChanged;
-  final Function(int?, bool) onPointFocus; // Add this line
 
   const PatternEditor({
     super.key,
@@ -40,7 +39,6 @@ class PatternEditor extends StatefulWidget {
     required this.onIntensityChanged,
     required this.onFrequencyChanged,
     required this.onDurationChanged,
-    required this.onPointFocus, // Add this line
   });
 
   @override
@@ -137,7 +135,6 @@ class _PatternEditorState extends State<PatternEditor> {
                       icon: Icon(Icons.arrow_drop_down,
                           color: Colors.white, size: widget.size.width * 0.018),
                       style: TextStyle(fontSize: widget.size.width * 0.009),
-                      onTap: () => widget.onPointFocus(index, true),
                       items: widget.options.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
@@ -150,7 +147,6 @@ class _PatternEditorState extends State<PatternEditor> {
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           widget.onOutsideChanged(index, newValue);
-                          widget.onPointFocus(null, true); // Clear focus after selection
                         }
                       },
                     ),
@@ -187,7 +183,6 @@ class _PatternEditorState extends State<PatternEditor> {
                       icon: Icon(Icons.arrow_drop_down,
                           color: Colors.white, size: widget.size.width * 0.018),
                       style: TextStyle(fontSize: widget.size.width * 0.009),
-                      onTap: () => widget.onPointFocus(index, false),
                       items: widget.options.map((String value) {
                         return DropdownMenuItem<String>(
                           value: value,
@@ -200,7 +195,6 @@ class _PatternEditorState extends State<PatternEditor> {
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           widget.onInsideChanged(index, newValue);
-                          widget.onPointFocus(null, false); // Clear focus after selection
                         }
                       },
                     ),
