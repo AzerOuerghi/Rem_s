@@ -6,6 +6,7 @@ class PatternSummary extends StatefulWidget {
   final List<Map<String, dynamic>> steps;
   final Function(int) onDeleteStep;
   final Function(int) onEditStep;
+  final double scale;
 
   const PatternSummary({
     super.key,
@@ -13,6 +14,7 @@ class PatternSummary extends StatefulWidget {
     required this.steps,
     required this.onDeleteStep,
     required this.onEditStep,
+    this.scale = 1.0,
   });
 
   @override
@@ -48,8 +50,9 @@ class _PatternSummaryState extends State<PatternSummary> {
 
   @override
   Widget build(BuildContext context) {
-    final double cellSize = widget.size.width * 0.045;
-    final double cellRadius = widget.size.width * 0.006;
+    final scale = widget.scale;
+    final double cellSize = widget.size.width * 0.045 * scale;
+    final double cellRadius = widget.size.width * 0.006 * scale;
     
     // Get number of bladders from steps or config, fallback to 10
     final bladderCount = widget.steps.isNotEmpty 
@@ -61,33 +64,33 @@ class _PatternSummaryState extends State<PatternSummary> {
       children: [
         Padding(
           padding: EdgeInsets.only(
-            left: widget.size.width * 0.008,
-            bottom: widget.size.height * 0.008,
+            left: widget.size.width * 0.008 * scale,
+            bottom: widget.size.height * 0.008 * scale,
           ),
           child: Text(
             'Pattern summary',
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: widget.size.width * 0.012,
+              fontSize: widget.size.width * 0.012 * scale,
             ),
           ),
         ),
         // Add height constraint and scroll view
         SizedBox(
-          height: widget.size.height * 0.2, // Fixed height for the table container
+          height: widget.size.height * 0.2 * scale, // Fixed height for the table container
           child: Scrollbar(
             thumbVisibility: true,
             child: SingleChildScrollView(
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                  headingRowHeight: widget.size.height * 0.052,
-                  dataRowHeight: widget.size.height * 0.052,
-                  columnSpacing: widget.size.width * 0.006,
+                  headingRowHeight: widget.size.height * 0.052 * scale,
+                  dataRowHeight: widget.size.height * 0.052 * scale,
+                  columnSpacing: widget.size.width * 0.006 * scale,
                   columns: [
                     DataColumn(
-                      label: _squareHeader('ID', cellSize, cellRadius, Colors.transparent),
+                      label: _squareHeader('ID', cellSize, cellRadius, Colors.transparent, scale),
                     ),
                     ...List.generate(
                       bladderCount,
@@ -97,20 +100,21 @@ class _PatternSummaryState extends State<PatternSummary> {
                           cellSize,
                           cellRadius,
                           Colors.green.shade800.withOpacity(0.6),
+                          scale,
                         ),
                       ),
                     ),
                     DataColumn(
-                      label: _squareHeader('INTENSITY', cellSize, cellRadius, Colors.grey.withOpacity(0.6)),
+                      label: _squareHeader('INTENSITY', cellSize, cellRadius, Colors.grey.withOpacity(0.6), scale),
                     ),
                     DataColumn(
-                      label: _squareHeader('FREQUENCY', cellSize, cellRadius, Colors.grey.withOpacity(0.6)),
+                      label: _squareHeader('FREQUENCY', cellSize, cellRadius, Colors.grey.withOpacity(0.6), scale),
                     ),
                     DataColumn(
-                      label: _squareHeader('TIME', cellSize, cellRadius, Colors.grey.withOpacity(0.6)),
+                      label: _squareHeader('TIME', cellSize, cellRadius, Colors.grey.withOpacity(0.6), scale),
                     ),
                     DataColumn(
-                      label: _squareHeader('Actions', cellSize, cellRadius, Colors.transparent),
+                      label: _squareHeader('Actions', cellSize, cellRadius, Colors.transparent, scale),
                     ),
                   ],
                   rows: List.generate(widget.steps.length, (index) {
@@ -118,14 +122,14 @@ class _PatternSummaryState extends State<PatternSummary> {
                     final bladders = step['bladders'] as List;
                     return DataRow(
                       cells: [
-                        DataCell(_buildCell(step['step_id'].toString(), 0)),
+                        DataCell(_buildCell(step['step_id'].toString(), 0, scale)),
                         ...List.generate(
                           bladders.length,
-                          (i) => DataCell(_buildCell(bladders[i]['value'], i + 1)),
+                          (i) => DataCell(_buildCell(bladders[i]['value'], i + 1, scale)),
                         ),
-                        DataCell(_buildCell(step['intensity'].round().toString(), 11)),
-                        DataCell(_buildCell(step['frequency'].round().toString(), 12)),
-                        DataCell(_buildCell((step['duration_ms'] / 1000).toStringAsFixed(2), 13)),
+                        DataCell(_buildCell(step['intensity'].round().toString(), 11, scale)),
+                        DataCell(_buildCell(step['frequency'].round().toString(), 12, scale)),
+                        DataCell(_buildCell((step['duration_ms'] / 1000).toStringAsFixed(2), 13, scale)),
                         DataCell(
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -133,14 +137,14 @@ class _PatternSummaryState extends State<PatternSummary> {
                               IconButton(
                                 icon: Icon(Icons.edit, 
                                   color: Colors.white,
-                                  size: widget.size.width * 0.015,
+                                  size: widget.size.width * 0.015 * scale,
                                 ),
                                 onPressed: () => widget.onEditStep(index),
                               ),
                               IconButton(
                                 icon: Icon(Icons.delete,
                                   color: Colors.red,
-                                  size: widget.size.width * 0.015,
+                                  size: widget.size.width * 0.015 * scale,
                                 ),
                                 onPressed: () => widget.onDeleteStep(index),
                               ),
@@ -159,23 +163,23 @@ class _PatternSummaryState extends State<PatternSummary> {
     );
   }
 
-  Widget _buildCell(String text, int index) {
+  Widget _buildCell(String text, int index, double scale) {
     return Container(
       margin: EdgeInsets.symmetric(
-        horizontal: widget.size.width * 0.003,
-        vertical: widget.size.height * 0.004,
+        horizontal: widget.size.width * 0.003 * scale,
+        vertical: widget.size.height * 0.004 * scale,
       ),
-      width: widget.size.width * 0.045,
-      height: widget.size.width * 0.045,
+      width: widget.size.width * 0.045 * scale,
+      height: widget.size.width * 0.045 * scale,
       alignment: Alignment.center,
       decoration: BoxDecoration(
         color: getCellColor(index),
-        borderRadius: BorderRadius.circular(widget.size.width * 0.006),
+        borderRadius: BorderRadius.circular(widget.size.width * 0.006 * scale),
       ),
       child: Text(
         text,
         style: TextStyle(
-          fontSize: widget.size.width * 0.009,
+          fontSize: widget.size.width * 0.009 * scale,
           color: Colors.white,
         ),
         textAlign: TextAlign.center,
@@ -183,7 +187,7 @@ class _PatternSummaryState extends State<PatternSummary> {
     );
   }
 
-  Widget _squareHeader(String label, double cellSize, double cellRadius, Color color) {
+  Widget _squareHeader(String label, double cellSize, double cellRadius, Color color, double scale) {
     return Container(
       width: cellSize,
       height: cellSize,

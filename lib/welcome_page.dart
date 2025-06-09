@@ -65,7 +65,7 @@ class WelcomePage extends StatelessWidget {
                               children: [
                                 _WelcomeButton(
                                   label: 'NEW PROJECT',
-                                  onTap: () => Navigator.pushReplacementNamed(context, '/customise'),
+                                  onTap: () => Navigator.pushReplacementNamed(context, '/new_project'),
                                   size: size,
                                 ),
                                 SizedBox(width: size.width * 0.03),

@@ -6,6 +6,7 @@ class ActionButtons extends StatelessWidget {
   final VoidCallback onExport;
   final VoidCallback onSimulate;
   final bool isEditing;
+  final double scale;
 
   const ActionButtons({
     super.key,
@@ -14,6 +15,7 @@ class ActionButtons extends StatelessWidget {
     required this.onExport,
     required this.onSimulate,
     this.isEditing = false,
+    this.scale = 1.0,
   });
 
   void _showClearConfirmation(BuildContext context) {
@@ -112,60 +114,45 @@ class ActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = scale;
     return Container(
-      width: 189,
-      height: 598,
+      width: 189 * s,
+      height: 598 * s,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.05), blurRadius: 50)],
+        borderRadius: BorderRadius.circular(18 * s),
+        boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.05), blurRadius: 50 * s)],
       ),
       child: Column(
         children: [
-          const SizedBox(height: 25),
-          const Text(
+          SizedBox(height: 25 * s),
+          Text(
             'EDIT',
             style: TextStyle(
               fontFamily: 'Acumin Pro Wide',
-              fontSize: 16,
+              fontSize: 16 * s,
               fontWeight: FontWeight.w700,
               color: Colors.white,
               shadows: [
                 Shadow(
                   color: Color(0xA6FFFFFF),
-                  blurRadius: 8,
+                  blurRadius: 8 * s,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 21),
+          SizedBox(height: 21 * s),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 27),
+            padding: EdgeInsets.symmetric(horizontal: 27 * s),
             child: Column(
               children: [
-                _buildButton(
-                  'ADD STEP',
-                  onAddStep,
-                  background: Colors.white.withOpacity(0.1),
-                ),
-                const SizedBox(height: 21),
-                _buildButton(
-                  'SIMULATE',
-                  onSimulate,
-                  background: const Color(0x1A00FFFF),
-                ),
-                const SizedBox(height: 21),
-                _buildButton(
-                  'EXPORT',
-                  onExport,
-                  background: const Color(0x1A00FFFF),
-                ),
-                const SizedBox(height: 21),
-                _buildButton(
-                  'CLEAR ALL',
-                  () => _showClearConfirmation(context),
-                  background: const Color(0x1AFF0000),
-                ),
+                _buildButton('ADD STEP', onAddStep, background: Colors.white.withOpacity(0.1), scale: s),
+                SizedBox(height: 21 * s),
+                _buildButton('SIMULATE', onSimulate, background: const Color(0x1A00FFFF), scale: s),
+                SizedBox(height: 21 * s),
+                _buildButton('EXPORT', onExport, background: const Color(0x1A00FFFF), scale: s),
+                SizedBox(height: 21 * s),
+                _buildButton('CLEAR ALL', () => _showClearConfirmation(context), background: const Color(0x1AFF0000), scale: s),
               ],
             ),
           ),
@@ -174,25 +161,25 @@ class ActionButtons extends StatelessWidget {
     );
   }
 
-  Widget _buildButton(String label, VoidCallback onPressed, {Color? background}) {
+  Widget _buildButton(String label, VoidCallback onPressed, {Color? background, double scale = 1.0}) {
     return Container(
-      width: 133,
-      height: 44,
+      width: 133 * scale,
+      height: 44 * scale,
       decoration: BoxDecoration(
         color: background,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8 * scale),
       ),
       child: TextButton(
         onPressed: onPressed,
         style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: EdgeInsets.symmetric(horizontal: 20 * scale, vertical: 10 * scale),
           backgroundColor: Colors.transparent,
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Poppins',
-            fontSize: 16,
+            fontSize: 16 * scale,
             fontWeight: FontWeight.w700,
             color: Colors.white,
           ),

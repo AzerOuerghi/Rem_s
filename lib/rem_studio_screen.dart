@@ -34,10 +34,23 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   String? selectedAdjustment;
   List<String> bladderStates = [];
 
+  String? projectName;
+  String? projectDescription;
+
   @override
   void initState() {
     super.initState();
     _initializeConfig();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    if (args != null) {
+      projectName = args['projectName'] ?? projectName;
+      projectDescription = args['projectDescription'] ?? projectDescription;
+    }
   }
 
   Future<void> _initializeConfig() async {
@@ -143,6 +156,8 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
       }).toList();
 
       final exportData = {
+        'projectName': projectName ?? '',
+        'projectDescription': projectDescription ?? '',
         'totalSteps': steps.length,
         'steps': formattedSteps,
       };
@@ -277,318 +292,337 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
+    // Reference design size
+    const double baseWidth = 1920;
+    const double baseHeight = 1080;
+    final double wScale = size.width / baseWidth;
+    final double hScale = size.height / baseHeight;
+    final double scale = wScale < hScale ? wScale : hScale;
     final numBladders = bladderValues.length;
 
     return Scaffold(
       backgroundColor: const Color(0xFF111111),
-      body: Stack(
-        children: [
-          // Background image
-          Positioned.fill(
-            child: Image.asset(
-              'assets/bg.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Dark overlay
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.35),
-            ),
-          ),
-          // Title
-          Positioned(
-            left: MediaQuery.of(context).size.width / 2 - 170.5 + 25.5,
-            top: 34,
-            child: SizedBox(
-              width: 341,
-              height: 58,
-              child: Text(
-                'REM STUDIO',
-                style: TextStyle(
-                  fontFamily: 'Acumin Pro Wide',
-                  fontSize: 48,
-                  fontWeight: FontWeight.w700,
-                  height: 58/48,
-                  color: Colors.white,
-                  shadows: [
-                    Shadow(
-                      color: Colors.white,
-                      blurRadius: 16,
-                    ),
-                  ],
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final double cScale = (constraints.maxWidth / baseWidth).clamp(0.5, 1.0);
+
+          return Stack(
+            children: [
+              // Background image
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/bg.png',
+                  fit: BoxFit.cover,
                 ),
               ),
-            ),
-          ),
-
-          // 3D Simulator section
-          Positioned(
-            left: 38,
-            top: 132,
-            child: Container(
-              width: 1619, // Reduced from 1719
-              height: 598,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.05), blurRadius: 50)],
+              // Dark overlay
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.35),
+                ),
               ),
-              child: Stack(
-                children: [
-                  // Chair image
-                  Positioned(
-                    left: 0,
-                    top: -177,
-                    child: Image.asset(
-                      'assets/chair.png',
-                      width: 907,
-                      height: 1209,
-                      fit: BoxFit.cover,
+              // Title
+              Positioned(
+                left: constraints.maxWidth / 2 - (341 * cScale) / 2,
+                top: 34 * cScale,
+                child: SizedBox(
+                  width: 341 * cScale,
+                  height: 58 * cScale,
+                  child: Text(
+                    'REM STUDIO',
+                    style: TextStyle(
+                      fontFamily: 'Acumin Pro Wide',
+                      fontSize: 48 * cScale,
+                      fontWeight: FontWeight.w700,
+                      height: 58 / 48,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          color: Colors.white,
+                          blurRadius: 16 * cScale,
+                        ),
+                      ],
                     ),
                   ),
-                  // 3D SIMULATOR title
-                  Positioned(
-                    left: 38 + 40,
-                    top: 25,
-                    child: const Text(
-                      '3D SIMULATOR',
-                      style: TextStyle(
-                        fontFamily: 'Acumin Pro Wide',
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(
-                            color: Color(0xA6FFFFFF),
-                            blurRadius: 8,
+                ),
+              ),
+
+              // 3D Simulator section
+              Positioned(
+                left: 38 * cScale,
+                top: 132 * cScale,
+                child: Container(
+                  width: 1619 * cScale,
+                  height: 598 * cScale,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(18 * cScale),
+                    boxShadow: [BoxShadow(color: Colors.white.withOpacity(0.05), blurRadius: 50 * cScale)],
+                  ),
+                  child: Stack(
+                    children: [
+                      // Chair image
+                      Positioned(
+                        left: 0,
+                        top: -177 * cScale,
+                        child: Image.asset(
+                          'assets/chair.png',
+                          width: 907 * cScale,
+                          height: 1209 * cScale,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      // 3D SIMULATOR title
+                      Positioned(
+                        left: (38 + 40) * cScale,
+                        top: 25 * cScale,
+                        child: Text(
+                          '3D SIMULATOR',
+                          style: TextStyle(
+                            fontFamily: 'Acumin Pro Wide',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16 * cScale,
+                            color: Colors.white,
+                            shadows: [
+                              Shadow(
+                                color: Color(0xA6FFFFFF),
+                                blurRadius: 8 * cScale,
+                              ),
+                            ],
                           ),
-                        ],
+                        ),
+                      ),
+                      // Adjustment type selector
+                      Positioned(
+                        left: 841 * cScale,
+                        top: 60 * cScale,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'SELECT ADJUSTMENT TYPE',
+                              style: TextStyle(
+                                fontFamily: 'Acumin Pro Wide',
+                                fontSize: 15 * cScale,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xA6FFFFFF),
+                                    blurRadius: 10 * cScale,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 25 * cScale),
+                            Row(
+                              children: [
+                                _buildAdjustmentButton('X', cScale),
+                                SizedBox(width: 24 * cScale),
+                                _buildAdjustmentButton('P', cScale),
+                                SizedBox(width: 24 * cScale),
+                                _buildAdjustmentButton('FP', cScale),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Dynamic bladder buttons (5x2 grid)
+                      ...List.generate(numBladders, (i) {
+                        final col = i < 5 ? 0 : 1;
+                        final row = i % 5;
+                        final left = 385 + col * 113;
+                        final top = 200 + row * 62;
+                        return _buildBladderButton(i, cScale, left * cScale, top * cScale);
+                      }),
+                      // Sliders: INTENSITY, PULSE FREQUENCY, DURATION/STEP
+                      Positioned(
+                        left: 841 * cScale,
+                        top: 207 * cScale,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: EdgeInsets.only(left: 13.75 * cScale),
+                              child: Text(
+                                'INTENSITY',
+                                style: TextStyle(
+                                  fontFamily: 'Acumin Pro Wide',
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15 * cScale,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      color: Color(0xA6FFFFFF),
+                                      blurRadius: 10 * cScale,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 20 * cScale),
+                            VerticalSlider(
+                              value: _currentIntensity,
+                              min: 0,
+                              max: 100,
+                              divisions: 20,
+                              onChanged: (v) => setState(() => _currentIntensity = v),
+                              label: 'INTENSITY',
+                              unit: '%',
+                              valueLabel: _currentIntensity.round().toString(),
+                              scale: cScale,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        left: 1138 * cScale,
+                        top: 207 * cScale,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PULSE FREQUENCY',
+                              style: TextStyle(
+                                fontFamily: 'Acumin Pro Wide',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15 * cScale,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xA6FFFFFF),
+                                    blurRadius: 10 * cScale,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 20 * cScale),
+                            VerticalSlider(
+                              value: _currentFrequency,
+                              min: 0,
+                              max: 100,
+                              divisions: 20,
+                              onChanged: (v) => setState(() => _currentFrequency = v),
+                              label: 'PULSE FREQUENCY',
+                              unit: 'Hz',
+                              valueLabel: _currentFrequency.round().toString(),
+                              scale: cScale,
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        left: 1483 * cScale,
+                        top: 207 * cScale,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'DURATION/STEP',
+                              style: TextStyle(
+                                fontFamily: 'Acumin Pro Wide',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 15 * cScale,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xA6FFFFFF),
+                                    blurRadius: 10 * cScale,
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 20 * cScale),
+                            VerticalSlider(
+                              value: _currentDuration,
+                              min: 0,
+                              max: 5,
+                              divisions: 10,
+                              onChanged: (v) => setState(() => _currentDuration = v),
+                              label: 'DURATION / STEP',
+                              unit: 'ms',
+                              valueLabel: _currentDuration.toStringAsFixed(2),
+                              scale: cScale,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // Action Buttons section
+              Positioned(
+                left: 1688 * cScale,
+                top: 132 * cScale,
+                child: Transform.scale(
+                  scale: cScale,
+                  alignment: Alignment.topLeft,
+                  child: ActionButtons(
+                    onAddStep: _addStep,
+                    onClearAll: _clearAllSteps,
+                    onExport: _exportSteps,
+                    onSimulate: _showSimulator,
+                    isEditing: editingIndex != null,
+                  ),
+                ),
+              ),
+
+              // Pattern Summary section
+              Positioned(
+                left: 38 * cScale,
+                top: 746 * cScale,
+                child: Container(
+                  width: 1919 * cScale,
+                  height: 349 * cScale,
+                  child: DottedCard(
+                    borderRadius: 18 * cScale,
+                    child: Padding(
+                      padding: EdgeInsets.all(size.width * 0.012 * cScale),
+                      child: PatternSummary(
+                        size: Size(size.width * cScale, size.height * cScale),
+                        steps: steps,
+                        onDeleteStep: _deleteStep,
+                        onEditStep: _editStep,
+                        scale: cScale,
                       ),
                     ),
                   ),
-                  // Adjustment type selector
-                  Positioned(
-                    left: 841,
-                    top: 60,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'SELECT ADJUSTMENT TYPE',
-                          style: TextStyle(
-                            fontFamily: 'Acumin Pro Wide',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Color(0xA6FFFFFF),
-                                blurRadius: 10,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 25),
-                        Row(
-                          children: [
-                            _buildAdjustmentButton('X'),
-                            const SizedBox(width: 24),
-                            _buildAdjustmentButton('P'),
-                            const SizedBox(width: 24),
-                            _buildAdjustmentButton('FP'),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  // Dynamic bladder buttons (5x2 grid)
-                  ...List.generate(numBladders, (i) {
-                    final col = i < 5 ? 0 : 1;
-                    final row = i % 5;
-                    final left = 385 + col * 113;
-                    final top = 200 + row * 62;
-                    return _buildBladderButton(i);
-                  }),
-                  // Highlight selected bladder (optional)
-                  // Sliders: INTENSITY, PULSE FREQUENCY, DURATION/STEP
-                  Positioned(
-                    left: 841,
-                    top: 207,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Padding(
-                          padding: EdgeInsets.only(left: 13.75),
-                          child: Text(
-                            'INTENSITY',
-                            style: TextStyle(
-                              fontFamily: 'Acumin Pro Wide',
-                              fontWeight: FontWeight.w700,
-                              fontSize: 15,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  color: Color(0xA6FFFFFF),
-                                  blurRadius: 10,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        VerticalSlider(
-                          value: _currentIntensity,
-                          min: 0,
-                          max: 100,
-                          divisions: 20,
-                          onChanged: (v) => setState(() => _currentIntensity = v),
-                          label: 'INTENSITY',
-                          unit: '%',
-                          valueLabel: _currentIntensity.round().toString(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: 1138,
-                    top: 207,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'PULSE FREQUENCY',
-                          style: TextStyle(
-                            fontFamily: 'Acumin Pro Wide',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Color(0xA6FFFFFF),
-                                blurRadius: 10,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        VerticalSlider(
-                          value: _currentFrequency,
-                          min: 0,
-                          max: 100,
-                          divisions: 20,
-                          onChanged: (v) => setState(() => _currentFrequency = v),
-                          label: 'PULSE FREQUENCY',
-                          unit: 'Hz',
-                          valueLabel: _currentFrequency.round().toString(),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    left: 1483,
-                    top: 207,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'DURATION/STEP',
-                          style: TextStyle(
-                            fontFamily: 'Acumin Pro Wide',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Color(0xA6FFFFFF),
-                                blurRadius: 10,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        VerticalSlider(
-                          value: _currentDuration,
-                          min: 0,
-                          max: 5,
-                          divisions: 10,
-                          onChanged: (v) => setState(() => _currentDuration = v),
-                          label: 'DURATION / STEP',
-                          unit: 'ms',
-                          valueLabel: _currentDuration.toStringAsFixed(2),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Action Buttons section
-          Positioned(
-            left: 1688, // Adjusted from 1768 to add more space
-            top: 132,
-            child: ActionButtons(
-              onAddStep: _addStep,
-              onClearAll: _clearAllSteps,
-              onExport: _exportSteps,
-              onSimulate: _showSimulator,
-              isEditing: editingIndex != null,
-            ),
-          ),
-
-          // Pattern Summary section
-          Positioned(
-            left: 38,
-            top: 746,
-            child: Container(
-              width: 1919,
-              height: 349,
-              child: DottedCard(
-                borderRadius: 18,
-                child: Padding(
-                  padding: EdgeInsets.all(size.width * 0.012),
-                  child: PatternSummary(
-                    size: size,
-                    steps: steps,
-                    onDeleteStep: _deleteStep,
-                    onEditStep: _editStep,
-                  ),
                 ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildBladderButton(int index) {
+  Widget _buildBladderButton(int index, double scale, double left, double top) {
     final isActive = activeBladderIndex == index;
     final hasValue = bladderStates[index].isNotEmpty;
-    
+
     return Positioned(
-      left: 385 + (index >= 5 ? 113 : 0).toDouble(),
-      top: (200 + (index % 5) * 62).toDouble(),
+      left: left,
+      top: top,
       child: GestureDetector(
         onTap: () => _handleBladderTap(index),
         child: Container(
-          width: 72,
-          height: 42,
+          width: 72 * scale,
+          height: 42 * scale,
           decoration: BoxDecoration(
             color: hasValue ? const Color.fromRGBO(80, 165, 50, 0.6) :
                    isActive ? Colors.white.withOpacity(0.2) :
                    Colors.white.withOpacity(0.1),
             border: Border.all(
               color: isActive ? Colors.white : const Color(0xFF85E264),
-              width: isActive ? 2 : 1,
+              width: isActive ? 2 * scale : 1 * scale,
             ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(12 * scale),
             boxShadow: isActive ? [
               BoxShadow(
                 color: Colors.white.withOpacity(0.5),
-                blurRadius: 6,
+                blurRadius: 6 * scale,
               )
             ] : null,
           ),
@@ -598,7 +632,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
               style: TextStyle(
                 fontFamily: 'Poppins',
                 fontWeight: FontWeight.w700,
-                fontSize: 16,
+                fontSize: 16 * scale,
                 color: Colors.white,
               ),
             ),
@@ -608,21 +642,21 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
     );
   }
 
-  Widget _buildAdjustmentButton(String label) {
+  Widget _buildAdjustmentButton(String label, double scale) {
     final isSelected = selectedAdjustment == label;
     return GestureDetector(
       onTap: () => _handleAdjustmentSelect(label),
       child: Container(
-        width: 68,
-        height: 44,
+        width: 68 * scale,
+        height: 44 * scale,
         decoration: BoxDecoration(
           color: Colors.white.withOpacity(activeBladderIndex != null ? 0.1 : 0.05),
-          borderRadius: BorderRadius.circular(8),
-          border: isSelected ? Border.all(color: Colors.white, width: 2) : null,
+          borderRadius: BorderRadius.circular(8 * scale),
+          border: isSelected ? Border.all(color: Colors.white, width: 2 * scale) : null,
           boxShadow: isSelected ? [
             BoxShadow(
               color: Colors.white.withOpacity(0.5),
-              blurRadius: 6.2,
+              blurRadius: 6.2 * scale,
             )
           ] : null,
         ),
@@ -632,7 +666,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
             style: TextStyle(
               fontFamily: 'Poppins',
               fontWeight: FontWeight.w700,
-              fontSize: 16,
+              fontSize: 16 * scale,
               color: Colors.white.withOpacity(activeBladderIndex != null ? 1 : 0.5),
             ),
           ),
