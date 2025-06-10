@@ -24,9 +24,9 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   ConfigService? config;
   bool isLoading = true;
 
-  double _currentIntensity = 50;
-  double _currentFrequency = 50;
-  double _currentDuration = 2.5;
+  double _currentIntensity = 50;  // 0-100%
+  double _currentFrequency = 300; // 100-500ms
+  double _currentDuration = 1.0;  // 0-5s with 0.1s steps
   int? editingIndex;
 
   // Add new state variables
@@ -79,10 +79,16 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   void _handleAdjustmentSelect(String adjustment) {
     if (activeBladderIndex != null) {
       setState(() {
-        selectedAdjustment = adjustment;
-        bladderStates[activeBladderIndex!] = adjustment;
-        bladderValues[activeBladderIndex!] = adjustment;
-        // Removed auto-progression to next bladder
+        // If same adjustment is selected again, clear it
+        if (selectedAdjustment == adjustment && bladderStates[activeBladderIndex!] == adjustment) {
+          selectedAdjustment = '';
+          bladderStates[activeBladderIndex!] = '';
+          bladderValues[activeBladderIndex!] = '';
+        } else {
+          selectedAdjustment = adjustment;
+          bladderStates[activeBladderIndex!] = adjustment;
+          bladderValues[activeBladderIndex!] = adjustment;
+        }
       });
     }
   }
@@ -96,7 +102,6 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
         } else {
           steps.add(_createStepData(steps.length + 1));
         }
-        // Reset all states
         activeBladderIndex = null;
         selectedAdjustment = null;
         bladderValues = List.filled(config?.numBladders ?? 10, '');
@@ -111,15 +116,27 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
       editingIndex = null;
       bladderValues = List.filled(config?.numBladders ?? 10, '');
       _currentIntensity = 50;
-      _currentFrequency = 50;
-      _currentDuration = 2.5;
+      _currentFrequency = 300;
+      _currentDuration = 1.0;
     });
   }
 
   void _editStep(int index) {
     final step = steps[index];
     setState(() {
-      bladderValues = List<String>.from(step['bladders'].map((b) => b['value']));
+      bladderValues = List<String>.filled(config?.numBladders ?? 10, '');
+      bladderStates = List<String>.filled(config?.numBladders ?? 10, '');
+      
+      final bladders = step['bladders'] as List;
+      for (var bladder in bladders) {
+        final position = bladder['position'] as int;
+        final value = bladder['value'] as String;
+        if (value.isNotEmpty) {
+          bladderValues[position] = value;
+          bladderStates[position] = value;
+        }
+      }
+      
       _currentIntensity = step['intensity'];
       _currentFrequency = step['frequency'];
       _currentDuration = step['duration_ms'] / 1000;
@@ -191,21 +208,29 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   }
 
   void _showExportDialog() {
+    final totalDurationMs = steps.fold<int>(0, (sum, step) => sum + (step['duration_ms'] as int));
+    final totalDurationSec = totalDurationMs / 1000;
+    final minutes = (totalDurationSec / 60).floor();
+    final seconds = (totalDurationSec % 60).toStringAsFixed(1);
+    final formattedDuration = minutes > 0 
+        ? '$minutes min $seconds sec'
+        : '$seconds seconds';
+
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(24),
+          width: 500,
+          padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
             color: const Color(0xFF1B1D22),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             border: Border.all(color: Colors.white24),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.5),
-                blurRadius: 20,
+                blurRadius: 30,
                 spreadRadius: 5,
               ),
             ],
@@ -213,47 +238,141 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.check_circle_outline,
-                color: Colors.green,
-                size: 48,
+              Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: Icon(Icons.close, color: Colors.white54),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  Center(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.2),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.check_circle_outline,
+                            color: Colors.green,
+                            size: 48,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Export Complete',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white10),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildExportMetricRow(
+                      icon: Icons.drive_file_rename_outline,
+                      label: 'Pattern Name',
+                      value: projectName ?? 'Untitled',
+                    ),
+                    const Divider(height: 24, color: Colors.white10),
+                    _buildExportMetricRow(
+                      icon: Icons.format_list_numbered,
+                      label: 'Total Steps',
+                      value: '${steps.length}',
+                    ),
+                    const Divider(height: 24, color: Colors.white10),
+                    _buildExportMetricRow(
+                      icon: Icons.timer_outlined,
+                      label: 'Total Duration',
+                      value: formattedDuration,
+                    ),
+                    if (projectDescription?.isNotEmpty ?? false) ...[
+                      const Divider(height: 24, color: Colors.white10),
+                      _buildExportMetricRow(
+                        icon: Icons.description_outlined,
+                        label: 'Description',
+                        value: projectDescription!,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              const SizedBox(height: 32),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.info_outline, 
+                    size: 16, 
+                    color: Colors.white.withOpacity(0.7)
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Files exported: JSON and Binary formats',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.7),
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        )
+      ));
+  }
+
+  Widget _buildExportMetricRow({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: Colors.white54, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                'Export Successful',
+                label,
+                style: TextStyle(
+                  color: Colors.white54,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '${steps.length} steps have been exported',
-                style: TextStyle(
-                  color: Colors.white70,
                   fontSize: 16,
-                ),
-              ),
-              const SizedBox(height: 24),
-              TextButton(
-                style: TextButton.styleFrom(
-                  backgroundColor: Colors.white10,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 32,
-                    vertical: 16,
-                  ),
-                ),
-                onPressed: () => Navigator.pop(context),
-                child: const Text(
-                  'OK',
-                  style: TextStyle(color: Colors.white),
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 
@@ -273,7 +392,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
           _currentFrequency = value;
           break;
         case 'duration':
-          _currentDuration = value;
+          _currentDuration = double.parse(value.toStringAsFixed(1));
           break;
       }
     });
@@ -286,6 +405,86 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
         bladderValues: bladderValues,
         steps: steps,
       ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title, String tooltip, double scale) {
+    return Row(
+      children: [
+        Tooltip(
+          message: tooltip,
+          textStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 14 * scale,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: EdgeInsets.all(12 * scale),
+          child: Icon(
+            Icons.info_outline,
+            color: Colors.white54,
+            size: 16 * scale,
+          ),
+        ),
+        SizedBox(width: 8 * scale),
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Acumin Pro Wide',
+            fontSize: 15 * scale,
+            fontWeight: FontWeight.w700,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Color(0xA6FFFFFF),
+                blurRadius: 10 * scale,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTitleWithInfo(String title, String tooltip, double scale) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontFamily: 'Acumin Pro Wide',
+            fontWeight: FontWeight.w700,
+            fontSize: 15 * scale,
+            color: Colors.white,
+            shadows: [
+              Shadow(
+                color: Color(0xA6FFFFFF),
+                blurRadius: 10 * scale,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: 8 * scale),
+        Tooltip(
+          message: tooltip,
+          textStyle: TextStyle(
+            color: Colors.white,
+            fontSize: 14 * scale,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          padding: EdgeInsets.all(12 * scale),
+          child: Icon(
+            Icons.info_outline,
+            color: Colors.white54,
+            size: 16 * scale,
+          ),
+        ),
+      ],
     );
   }
 
@@ -347,6 +546,29 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                 ),
               ),
 
+              // Logo in top-left corner
+              Positioned(
+                left: 38 * cScale,
+                top: 34 * cScale,
+                child: Container(
+                  width: 250 * cScale,
+                  height: 90 * cScale,
+                  decoration: BoxDecoration(
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.1),
+                        blurRadius: 15 * cScale,
+                        spreadRadius: 2 * cScale,
+                      ),
+                    ],
+                  ),
+                  child: Image.asset(
+                    'assets/logo.png',
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ),
+
               // 3D Simulator section
               Positioned(
                 left: 38 * cScale,
@@ -399,30 +621,25 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            _buildSectionHeader(
                               'SELECT ADJUSTMENT TYPE',
-                              style: TextStyle(
-                                fontFamily: 'Acumin Pro Wide',
-                                fontSize: 15 * cScale,
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Color(0xA6FFFFFF),
-                                    blurRadius: 10 * cScale,
-                                  ),
-                                ],
-                              ),
+                              'X: Full Inflation (constant pressure)\nP: Pulse (rhythmic massage)\nFP: Full Pulse (stronger massage with complete cycles)',
+                              cScale,
                             ),
                             SizedBox(height: 25 * cScale),
-                            Row(
-                              children: [
-                                _buildAdjustmentButton('X', cScale),
-                                SizedBox(width: 24 * cScale),
-                                _buildAdjustmentButton('P', cScale),
-                                SizedBox(width: 24 * cScale),
-                                _buildAdjustmentButton('FP', cScale),
-                              ],
+                            Container(
+                              height: 44 * cScale,
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  _buildAdjustmentButton('X', cScale),
+                                  SizedBox(width: 24 * cScale),
+                                  _buildAdjustmentButton('P', cScale),
+                                  SizedBox(width: 24 * cScale),
+                                  _buildAdjustmentButton('FP', cScale),
+                                ],
+                              ),
                             ),
                           ],
                         ),
@@ -443,21 +660,11 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Padding(
-                              padding: EdgeInsets.only(left: 13.75 * cScale),
-                              child: Text(
+                              padding: EdgeInsets.only(left:  cScale),
+                              child: _buildSectionHeader(
                                 'INTENSITY',
-                                style: TextStyle(
-                                  fontFamily: 'Acumin Pro Wide',
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 15 * cScale,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      color: Color(0xA6FFFFFF),
-                                      blurRadius: 10 * cScale,
-                                    ),
-                                  ],
-                                ),
+                                'Controls the strength of the massage (0-100%). Higher values create stronger pressure.',
+                                cScale,
                               ),
                             ),
                             SizedBox(height: 20 * cScale),
@@ -476,35 +683,25 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         ),
                       ),
                       Positioned(
-                        left: 1138 * cScale,
+                        left: 1122 * cScale,
                         top: 207 * cScale,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            _buildSectionHeader(
                               'PULSE FREQUENCY',
-                              style: TextStyle(
-                                fontFamily: 'Acumin Pro Wide',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15 * cScale,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Color(0xA6FFFFFF),
-                                    blurRadius: 10 * cScale,
-                                  ),
-                                ],
-                              ),
+                              'Sets the interval between pulses (100-500ms). Lower values create faster pulses.',
+                              cScale,
                             ),
                             SizedBox(height: 20 * cScale),
                             VerticalSlider(
                               value: _currentFrequency,
-                              min: 0,
-                              max: 100,
-                              divisions: 20,
+                              min: 100,
+                              max: 500,
+                              divisions: 40,  // (500-100)/10 steps
                               onChanged: (v) => setState(() => _currentFrequency = v),
                               label: 'PULSE FREQUENCY',
-                              unit: 'Hz',
+                              unit: 'ms',
                               valueLabel: _currentFrequency.round().toString(),
                               scale: cScale,
                             ),
@@ -512,36 +709,26 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         ),
                       ),
                       Positioned(
-                        left: 1483 * cScale,
+                        left: 1450 * cScale,
                         top: 207 * cScale,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
+                            _buildSectionHeader(
                               'DURATION/STEP',
-                              style: TextStyle(
-                                fontFamily: 'Acumin Pro Wide',
-                                fontWeight: FontWeight.w700,
-                                fontSize: 15 * cScale,
-                                color: Colors.white,
-                                shadows: [
-                                  Shadow(
-                                    color: Color(0xA6FFFFFF),
-                                    blurRadius: 10 * cScale,
-                                  ),
-                                ],
-                              ),
+                              'Sets how long each step runs (0-5s). Controls the timing of the massage sequence.',
+                              cScale,
                             ),
                             SizedBox(height: 20 * cScale),
                             VerticalSlider(
                               value: _currentDuration,
                               min: 0,
                               max: 5,
-                              divisions: 10,
-                              onChanged: (v) => setState(() => _currentDuration = v),
+                              divisions: 50, // 0.1s steps = 50 divisions
+                              onChanged: (v) => setState(() => _currentDuration = double.parse(v.toStringAsFixed(1))),
                               label: 'DURATION / STEP',
-                              unit: 'ms',
-                              valueLabel: _currentDuration.toStringAsFixed(2),
+                              unit: 's',
+                              valueLabel: _currentDuration.toStringAsFixed(1),
                               scale: cScale,
                             ),
                           ],
@@ -586,6 +773,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         onDeleteStep: _deleteStep,
                         onEditStep: _editStep,
                         scale: cScale,
+                        editingIndex: editingIndex,
                       ),
                     ),
                   ),
@@ -611,7 +799,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
           width: 72 * scale,
           height: 42 * scale,
           decoration: BoxDecoration(
-            color: hasValue ? const Color.fromRGBO(80, 165, 50, 0.6) :
+            color: hasValue ? const Color.fromRGBO(80,165,50,0.6) :
                    isActive ? Colors.white.withOpacity(0.2) :
                    Colors.white.withOpacity(0.1),
             border: Border.all(
@@ -644,6 +832,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
 
   Widget _buildAdjustmentButton(String label, double scale) {
     final isSelected = selectedAdjustment == label;
+    
     return GestureDetector(
       onTap: () => _handleAdjustmentSelect(label),
       child: Container(

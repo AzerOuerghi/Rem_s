@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
+import 'package:gif_view/gif_view.dart';
 
 class Simulator extends StatefulWidget {
   final double padding;
@@ -28,8 +29,12 @@ class Simulator extends StatefulWidget {
   State<Simulator> createState() => _SimulatorState();
 }
 
-class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMixin {
-  // Update positions calculation for dynamic number of bladders
+class _SimulatorState extends State<Simulator> {
+  int? currentStepIndex;
+  bool isSimulating = false;
+  Timer? simulationTimer;
+  double? stepProgress;
+
   List<Offset> generateDefaultPositions(int count) {
     // Create a grid layout for dynamic number of bladders
     const double startX = 0.2;
@@ -75,35 +80,22 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
   
   double get chairWidth => widget.isModal ? widget.size.width * 0.6 : widget.size.width * 0.7;
 
-  int? currentStepIndex;
-  bool isSimulating = false;
-  Timer? simulationTimer;
-  double? stepProgress;
-
-  late AnimationController _pulseController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 500),
-    )..repeat(reverse: true);
-  }
-
   bool isPointActive(String value) {
     return value == 'P' || value == 'FP';
   }
 
-  double _getPulseScale(bool isActive) {
-    if (!isActive || !isSimulating) return 1.0;
-    final step = currentStepIndex != null ? widget.steps[currentStepIndex!] : null;
-    final frequency = step?['frequency']?.toDouble() ?? 50.0;
-    final intensity = step?['intensity']?.toDouble() ?? 50.0;
-    
-    // Scale pulse size based on intensity and make it more dramatic at lower frequencies
-    final pulseRange = (intensity / 100) * (frequency < 50 ? 0.8 : 0.4);
-    return 1.0 + (_pulseController.value * pulseRange);
+  // Calculate animation speed based on frequency
+  Duration _calculateAnimationDuration(double frequency) {
+    // Map frequency (0-100) to duration (2000ms - 100ms)
+    final duration = 2000 - ((frequency / 100) * 1900);
+    return Duration(milliseconds: duration.toInt());
+  }
+
+  // Calculate frame rate based on frequency
+  int _calculateFrameRate(double frequency) {
+    // Map frequency (0-100) to frame rate (1-30 fps)
+    // Lower frequency = slower animation = lower fps
+    return (1 + ((frequency / 100) * 29)).round();
   }
 
   void toggleSimulation() {
@@ -120,7 +112,6 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
 
   void startSimulation() {
     simulationTimer?.cancel();
-    _pulseController.repeat(reverse: true);
 
     void runStep() {
       if (currentStepIndex! < widget.steps.length) {
@@ -166,7 +157,6 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
   void stopSimulation() {
     simulationTimer?.cancel();
     simulationTimer = null;
-    _pulseController.stop();
     setState(() {
       isSimulating = false;
       currentStepIndex = null;
@@ -175,36 +165,12 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
   }
 
   @override
-  void dispose() {
-    _pulseController.dispose();
-    simulationTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final currentStep = currentStepIndex != null ? widget.steps[currentStepIndex!] : null;
     final currentBladders = currentStep?['bladders'] as List?;
     final List<String> currentValues = currentBladders?.map((b) => b['value'] as String).toList() 
                                      ?? widget.bladderValues;
-    final intensity = currentStep?['intensity']?.toDouble() ?? 50.0;
     final frequency = currentStep?['frequency']?.toDouble() ?? 50.0;
-
-    // Update pulse speed based on frequency
-    if (isSimulating) {
-      final pulseSpeed = frequency >= 80 ? 150 :
-                        frequency >= 60 ? 250 :
-                        frequency >= 40 ? 500 :
-                        frequency >= 20 ? 900 :
-                        1200;
-      
-      if (_pulseController.duration != Duration(milliseconds: pulseSpeed)) {
-        _pulseController.duration = Duration(milliseconds: pulseSpeed);
-        if (isSimulating) {
-          _pulseController.repeat(reverse: true);
-        }
-      }
-    }
 
     return Container(
       decoration: BoxDecoration(
@@ -212,7 +178,7 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
           center: Alignment.center,
           radius: 1.5,
           colors: [
-            Colors.blue.withOpacity(isSimulating ? (intensity / 800) : 0),
+            Colors.blue.withOpacity(isSimulating ? (frequency / 800) : 0),
             Colors.transparent,
           ],
         ),
@@ -267,7 +233,7 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
                             center: Alignment.center,
                             radius: 0.8,
                             colors: [
-                              Colors.blue.withOpacity(intensity / 500),
+                              Colors.blue.withOpacity(frequency / 500),
                               Colors.transparent,
                             ],
                           ),
@@ -275,7 +241,7 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
                       ),
                     Center(
                       child: Image.asset(
-                        'assets/chair.png',
+                        'assets/chair2.png',
                         fit: BoxFit.cover,
                         width: chairWidth,
                       ),
@@ -285,25 +251,24 @@ class _SimulatorState extends State<Simulator> with SingleTickerProviderStateMix
                       currentValues.length,
                       (index) {
                         if (index >= activePositions.length) return const SizedBox.shrink();
+                        final isActive = isPointActive(currentValues[index]);
+                        
                         return Positioned(
                           left: _getPointLeftPosition(activePositions[index].dx),
                           top: _getPointTopPosition(activePositions[index].dy),
-                          child: Transform.scale(
-                            scale: _getPulseScale(isPointActive(currentValues[index])),
-                            child: Container(
-                              width: 24,
-                              height: 28,
-                              decoration: BoxDecoration(
-                                color: isPointActive(currentValues[index])
-                                    ? const Color.fromRGBO(51, 204, 0, 0.5)
-                                    : Colors.white.withOpacity(0.1),
-                                border: Border.all(
-                                  color: const Color(0xFF75FF46),
-                                  width: 1,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
+                          child: SizedBox(
+                            width: 200,
+                            height: 200,
+                            child: isActive && isSimulating
+                                ? GifView.asset(
+                                    'assets/bladder.gif',
+                                    frameRate: _calculateFrameRate(frequency),
+                                    fit: BoxFit.contain,
+                                  )
+                                : Image.asset(
+                                    'assets/bladder_static.png',
+                                    fit: BoxFit.contain,
+                                  ),
                           ),
                         );
                       },

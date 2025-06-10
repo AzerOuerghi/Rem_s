@@ -66,6 +66,21 @@ class _VerticalSliderState extends State<VerticalSlider> {
     );
   }
 
+  List<String> _generateScaleNumbers() {
+    final max = widget.max;
+    final min = widget.min;
+    final range = max - min;
+    final step = range / 4; // We show 5 numbers (0 to 4 positions)
+    
+    return List.generate(5, (index) {
+      final value = max - (step * index);
+      if (widget.unit == 'ms' || widget.unit == '%') {
+        return value.round().toString();
+      }
+      return value.toStringAsFixed(1); // For seconds, show decimal
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final scale = widget.scale;
@@ -211,14 +226,13 @@ class _VerticalSliderState extends State<VerticalSlider> {
             top: 44 * scale,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
-              children: List.generate(5, (index) {
-                final number = 5 - index;
+              children: _generateScaleNumbers().map((number) {
                 return Container(
-                  width: 8 * scale,
+                  width: 28 * scale,  // Increased width to accommodate larger numbers
                   height: 42 * scale,
                   alignment: Alignment.center,
                   child: Text(
-                    '$number',
+                    number,
                     style: TextStyle(
                       fontFamily: 'Poppins',
                       fontSize: 12 * scale,
@@ -227,7 +241,7 @@ class _VerticalSliderState extends State<VerticalSlider> {
                     ),
                   ),
                 );
-              }),
+              }).toList(),
             ),
           ),
 

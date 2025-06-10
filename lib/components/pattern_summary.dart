@@ -7,6 +7,7 @@ class PatternSummary extends StatefulWidget {
   final Function(int) onDeleteStep;
   final Function(int) onEditStep;
   final double scale;
+  final int? editingIndex;
 
   const PatternSummary({
     super.key,
@@ -15,6 +16,7 @@ class PatternSummary extends StatefulWidget {
     required this.onDeleteStep,
     required this.onEditStep,
     this.scale = 1.0,
+    this.editingIndex,
   });
 
   @override
@@ -37,13 +39,21 @@ class _PatternSummaryState extends State<PatternSummary> {
     });
   }
 
-  Color getCellColor(int index) {
-    if (index == 0) return Colors.transparent;
+  Color getCellColor(int index, int stepIndex) {
+    if (index == 0) {
+      return widget.editingIndex == stepIndex 
+          ? Colors.yellow.withOpacity(0.3) 
+          : Colors.transparent;
+    }
+    
     final bladderCount = widget.steps.isNotEmpty 
         ? (widget.steps[0]['bladders'] as List).length 
         : numBladders ?? 10;
+        
     if (index >= 1 && index <= bladderCount) {
-      return Colors.green.shade800.withOpacity(0.3);
+      return widget.editingIndex == stepIndex
+          ? Colors.green.withOpacity(0.5)
+          : Colors.green.shade800.withOpacity(0.3);
     }
     return Colors.grey.withOpacity(0.08);
   }
@@ -122,14 +132,14 @@ class _PatternSummaryState extends State<PatternSummary> {
                     final bladders = step['bladders'] as List;
                     return DataRow(
                       cells: [
-                        DataCell(_buildCell(step['step_id'].toString(), 0, scale)),
+                        DataCell(_buildCell(step['step_id'].toString(), 0, index)),
                         ...List.generate(
                           bladders.length,
-                          (i) => DataCell(_buildCell(bladders[i]['value'], i + 1, scale)),
+                          (i) => DataCell(_buildCell(bladders[i]['value'], i + 1, index)),
                         ),
-                        DataCell(_buildCell(step['intensity'].round().toString(), 11, scale)),
-                        DataCell(_buildCell(step['frequency'].round().toString(), 12, scale)),
-                        DataCell(_buildCell((step['duration_ms'] / 1000).toStringAsFixed(2), 13, scale)),
+                        DataCell(_buildCell(step['intensity'].round().toString(), 11, index)),
+                        DataCell(_buildCell(step['frequency'].round().toString(), 12, index)),
+                        DataCell(_buildCell((step['duration_ms'] / 1000).toStringAsFixed(2), 13, index)),
                         DataCell(
                           Row(
                             mainAxisSize: MainAxisSize.min,
@@ -163,24 +173,31 @@ class _PatternSummaryState extends State<PatternSummary> {
     );
   }
 
-  Widget _buildCell(String text, int index, double scale) {
+  Widget _buildCell(String text, int index, int stepIndex) {
     return Container(
       margin: EdgeInsets.symmetric(
-        horizontal: widget.size.width * 0.003 * scale,
-        vertical: widget.size.height * 0.004 * scale,
+        horizontal: widget.size.width * 0.003 * widget.scale,
+        vertical: widget.size.height * 0.004 * widget.scale,
       ),
-      width: widget.size.width * 0.045 * scale,
-      height: widget.size.width * 0.045 * scale,
+      width: widget.size.width * 0.045 * widget.scale,
+      height: widget.size.width * 0.045 * widget.scale,
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: getCellColor(index),
-        borderRadius: BorderRadius.circular(widget.size.width * 0.006 * scale),
+        color: getCellColor(index, stepIndex),
+        borderRadius: BorderRadius.circular(widget.size.width * 0.006 * widget.scale),
+        border: widget.editingIndex == stepIndex ? Border.all(
+          color: Colors.yellow.withOpacity(0.5),
+          width: 2,
+        ) : null,
       ),
       child: Text(
         text,
         style: TextStyle(
-          fontSize: widget.size.width * 0.009 * scale,
+          fontSize: widget.size.width * 0.009 * widget.scale,
           color: Colors.white,
+          fontWeight: index == 0 && widget.editingIndex == stepIndex 
+              ? FontWeight.bold 
+              : FontWeight.normal,
         ),
         textAlign: TextAlign.center,
       ),
