@@ -39,184 +39,301 @@ class _PatternSummaryState extends State<PatternSummary> {
     });
   }
 
-  Color getCellColor(int index, int stepIndex) {
-    if (index == 0) {
-      return widget.editingIndex == stepIndex 
-          ? Colors.yellow.withOpacity(0.3) 
-          : Colors.transparent;
-    }
-    
-    final bladderCount = widget.steps.isNotEmpty 
-        ? (widget.steps[0]['bladders'] as List).length 
-        : numBladders ?? 10;
-        
-    if (index >= 1 && index <= bladderCount) {
-      return widget.editingIndex == stepIndex
-          ? Colors.green.withOpacity(0.5)
-          : Colors.green.shade800.withOpacity(0.3);
-    }
-    return Colors.grey.withOpacity(0.08);
-  }
-
   @override
   Widget build(BuildContext context) {
     final scale = widget.scale;
-    final double cellSize = widget.size.width * 0.045 * scale;
-    final double cellRadius = widget.size.width * 0.006 * scale;
-    
+    // Use available width, clamp to max 1921px
+    final double width = widget.size.width.clamp(0, 1921 * scale);
+    final double height = 360 * scale;
+    // Adjust header and content widths to fit inside available width
+    final double margin = 110 * scale;
+    final double headerHeight = 52 * scale;
+    final double headerTop = 64 * scale;
+    final double headerLeft = 22 * scale;
+    final double headerWidth = width - headerLeft - margin;
+    final double titleLeft = 40 * scale;
+    final double titleTop = 25 * scale;
+    final double idLeft = 32 * scale;
+    final double idTop = 74 * scale;
+    final double idBoxWidth = 64 * scale;
+    final double idBoxHeight = 32 * scale;
+    final double bldStartLeft = 119 * scale;
+    final double bldTop = 74 * scale;
+    final double bldBoxWidth = 72 * scale;
+    final double bldBoxHeight = 32 * scale;
+    final double metricBoxWidth = 61 * scale;
+    final double metricBoxHeight = 32 * scale;
+    final double metricBoxGap = 10 * scale;
+    // Place metrics and clear all at the right edge, but keep inside width
+    final double metricsLeft = width - margin - (3 * metricBoxWidth + 2 * metricBoxGap + 84 * scale);
+    final double metricsTop = 74 * scale;
+    final double clearAllLeft = width - margin - 163 * scale;
+    final double clearAllTop = 10 * scale;
+    final double clearAllWidth = 163 * scale;
+    final double clearAllHeight = 44 * scale;
+
     // Get number of bladders from steps or config, fallback to 10
-    final bladderCount = widget.steps.isNotEmpty 
-        ? (widget.steps[0]['bladders'] as List).length 
+    final bladderCount = widget.steps.isNotEmpty
+        ? (widget.steps[0]['bladders'] as List).length
         : numBladders ?? 10;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.only(
-            left: widget.size.width * 0.008 * scale,
-            bottom: widget.size.height * 0.008 * scale,
-          ),
-          child: Text(
-            'Pattern summary',
-            style: TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: widget.size.width * 0.012 * scale,
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Stack(
+        children: [
+          // Main background
+          Positioned(
+            left: 0,
+            top: 0,
+            child: Container(
+              width: width,
+              height: height,
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(136, 136, 136, 0.2),
+                borderRadius: BorderRadius.circular(18 * scale),
+                // Simulate blur with a subtle shadow
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.08),
+                    blurRadius: 50 * scale,
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        // Add height constraint and scroll view
-        SizedBox(
-          height: widget.size.height * 0.2 * scale, // Fixed height for the table container
-          child: Scrollbar(
-            thumbVisibility: true,
-            child: SingleChildScrollView(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  headingRowHeight: widget.size.height * 0.052 * scale,
-                  dataRowHeight: widget.size.height * 0.052 * scale,
-                  columnSpacing: widget.size.width * 0.006 * scale,
-                  columns: [
-                    DataColumn(
-                      label: _squareHeader('ID', cellSize, cellRadius, Colors.transparent, scale),
-                    ),
-                    ...List.generate(
-                      bladderCount,
-                      (i) => DataColumn(
-                        label: _squareHeader(
-                          'BLD${i + 1}',
-                          cellSize,
-                          cellRadius,
-                          Colors.green.shade800.withOpacity(0.6),
-                          scale,
-                        ),
-                      ),
-                    ),
-                    DataColumn(
-                      label: _squareHeader('INTENSITY', cellSize, cellRadius, Colors.grey.withOpacity(0.6), scale),
-                    ),
-                    DataColumn(
-                      label: _squareHeader('FREQUENCY', cellSize, cellRadius, Colors.grey.withOpacity(0.6), scale),
-                    ),
-                    DataColumn(
-                      label: _squareHeader('TIME', cellSize, cellRadius, Colors.grey.withOpacity(0.6), scale),
-                    ),
-                    DataColumn(
-                      label: _squareHeader('Actions', cellSize, cellRadius, Colors.transparent, scale),
-                    ),
-                  ],
-                  rows: List.generate(widget.steps.length, (index) {
-                    final step = widget.steps[index];
-                    final bladders = step['bladders'] as List;
-                    return DataRow(
-                      cells: [
-                        DataCell(_buildCell(step['step_id'].toString(), 0, index)),
-                        ...List.generate(
-                          bladders.length,
-                          (i) => DataCell(_buildCell(bladders[i]['value'], i + 1, index)),
-                        ),
-                        DataCell(_buildCell(step['intensity'].round().toString(), 11, index)),
-                        DataCell(_buildCell(step['frequency'].round().toString(), 12, index)),
-                        DataCell(_buildCell((step['duration_ms'] / 1000).toStringAsFixed(2), 13, index)),
-                        DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: Icon(Icons.edit, 
-                                  color: Colors.white,
-                                  size: widget.size.width * 0.015 * scale,
-                                ),
-                                onPressed: () => widget.onEditStep(index),
-                              ),
-                              IconButton(
-                                icon: Icon(Icons.delete,
-                                  color: Colors.red,
-                                  size: widget.size.width * 0.015 * scale,
-                                ),
-                                onPressed: () => widget.onDeleteStep(index),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }),
+          // Header background
+          Positioned(
+            left: headerLeft,
+            top: headerTop,
+            child: Container(
+              width: headerWidth,
+              height: headerHeight,
+              decoration: BoxDecoration(
+                color: const Color.fromRGBO(136, 136, 136, 0.2),
+                borderRadius: BorderRadius.circular(18 * scale),
+              ),
+            ),
+          ),
+          // Title
+          Positioned(
+            left: titleLeft,
+            top: titleTop,
+            child: Text(
+              'PATTERN SUMMARY',
+              style: TextStyle(
+                fontFamily: 'Acumin Pro Wide',
+                fontWeight: FontWeight.w700,
+                fontSize: 16 * scale,
+                color: Colors.white,
+                shadows: [
+                  Shadow(
+                    color: Colors.white,
+                    blurRadius: 8 * scale,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // ID header
+          Positioned(
+            left: idLeft,
+            top: idTop,
+            child: Container(
+              width: idBoxWidth,
+              height: idBoxHeight,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.25),
+                borderRadius: BorderRadius.circular(8 * scale),
+              ),
+              child: Center(
+                child: Text(
+                  'ID',
+                  style: TextStyle(
+                    fontFamily: 'Poppins',
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16 * scale,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      ],
+          // Bladder headers
+          ...List.generate(
+            bladderCount,
+            (i) => Positioned(
+              left: bldStartLeft + i * (bldBoxWidth + 8 * scale),
+              top: bldTop,
+              child: Container(
+                width: bldBoxWidth,
+                height: bldBoxHeight,
+                decoration: BoxDecoration(
+                  color: const Color.fromRGBO(80, 165, 50, 0.6),
+                  border: Border.all(color: const Color(0xFF85E264)),
+                  borderRadius: BorderRadius.circular(8 * scale),
+                ),
+                child: Center(
+                  child: Text(
+                    'BLD${i + 1}',
+                    style: TextStyle(
+                      fontFamily: 'Poppins',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16 * scale,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          // Metrics headers (INT., FREQ., DUR.)
+          Positioned(
+            left: metricsLeft,
+            top: metricsTop,
+            child: Row(
+              children: [
+                _metricBox('INT.', metricBoxWidth, metricBoxHeight, scale),
+                SizedBox(width: metricBoxGap),
+                _metricBox('FREQ.', metricBoxWidth, metricBoxHeight, scale),
+                SizedBox(width: metricBoxGap),
+                _metricBox('DUR.', metricBoxWidth, metricBoxHeight, scale),
+              ],
+            ),
+          ),
+
+          // Table rows (IDs and values)
+          ...List.generate(widget.steps.length, (rowIdx) {
+            final step = widget.steps[rowIdx];
+            final bladders = step['bladders'] as List;
+            final rowTop = (idTop + idBoxHeight + 20 * scale) + rowIdx * (idBoxHeight + 10 * scale);
+            return Stack(
+              children: [
+                // ID cell
+                Positioned(
+                  left: idLeft,
+                  top: rowTop,
+                  child: Container(
+                    width: idBoxWidth,
+                    height: idBoxHeight,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8 * scale),
+                    ),
+                    child: Center(
+                      child: Text(
+                        step['step_id'].toString(),
+                        style: TextStyle(
+                          fontFamily: 'Poppins',
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16 * scale,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // Bladder value cells
+                ...List.generate(
+                  bladderCount,
+                  (i) => Positioned(
+                    left: bldStartLeft + i * (bldBoxWidth + 8 * scale),
+                    top: rowTop,
+                    child: Container(
+                      width: bldBoxWidth,
+                      height: bldBoxHeight,
+                      decoration: BoxDecoration(
+                        color: bladders[i]['value'] != ''
+                            ? const Color.fromRGBO(80, 165, 50, 0.2)
+                            : Colors.white.withOpacity(0.1),
+                        border: Border.all(color: const Color(0xFF85E264)),
+                        borderRadius: BorderRadius.circular(8 * scale),
+                      ),
+                      child: Center(
+                        child: Text(
+                          bladders[i]['value'] ?? '',
+                          style: TextStyle(
+                            fontFamily: 'Poppins',
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16 * scale,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // INT, FREQ, DUR cells
+                Positioned(
+                  left: metricsLeft,
+                  top: rowTop,
+                  child: Row(
+                    children: [
+                      _metricBox(step['intensity'].toString(), metricBoxWidth, metricBoxHeight, scale),
+                      SizedBox(width: metricBoxGap),
+                      _metricBox(step['frequency'].toString(), metricBoxWidth, metricBoxHeight, scale),
+                      SizedBox(width: metricBoxGap),
+                      _metricBox((step['duration_ms'] / 1000).toStringAsFixed(2), metricBoxWidth, metricBoxHeight, scale),
+                    ],
+                  ),
+                ),
+                // Edit/Delete buttons
+                Positioned(
+                  left: metricsLeft + 3 * (metricBoxWidth + metricBoxGap) + 20 * scale,
+                  top: rowTop,
+                  child: Row(
+                    children: [
+                      _iconButton(Icons.edit, Colors.white, () => widget.onEditStep(rowIdx), scale),
+                      SizedBox(width: 10 * scale),
+                      _iconButton(Icons.delete, Colors.red, () => widget.onDeleteStep(rowIdx), scale),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }),
+        ],
+      ),
     );
   }
 
-  Widget _buildCell(String text, int index, int stepIndex) {
+  Widget _metricBox(String label, double width, double height, double scale) {
     return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: widget.size.width * 0.003 * widget.scale,
-        vertical: widget.size.height * 0.004 * widget.scale,
-      ),
-      width: widget.size.width * 0.045 * widget.scale,
-      height: widget.size.width * 0.045 * widget.scale,
-      alignment: Alignment.center,
+      width: width,
+      height: height,
       decoration: BoxDecoration(
-        color: getCellColor(index, stepIndex),
-        borderRadius: BorderRadius.circular(widget.size.width * 0.006 * widget.scale),
-        border: widget.editingIndex == stepIndex ? Border.all(
-          color: Colors.yellow.withOpacity(0.5),
-          width: 2,
-        ) : null,
+        color: Colors.white.withOpacity(0.25),
+        borderRadius: BorderRadius.circular(8 * scale),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: widget.size.width * 0.009 * widget.scale,
-          color: Colors.white,
-          fontWeight: index == 0 && widget.editingIndex == stepIndex 
-              ? FontWeight.bold 
-              : FontWeight.normal,
+      child: Center(
+        child: Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'Poppins',
+            fontWeight: FontWeight.w700,
+            fontSize: 16 * scale,
+            color: Colors.white,
+          ),
         ),
-        textAlign: TextAlign.center,
       ),
     );
   }
 
-  Widget _squareHeader(String label, double cellSize, double cellRadius, Color color, double scale) {
-    return Container(
-      width: cellSize,
-      height: cellSize,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(cellRadius),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: cellSize * 0.2, color: Colors.white),
-        textAlign: TextAlign.center,
+  Widget _iconButton(IconData icon, Color color, VoidCallback onTap, double scale) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32 * scale,
+        height: 32 * scale,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8 * scale),
+        ),
+        child: Icon(
+          icon,
+          color: color,
+          size: 16 * scale,
+        ),
       ),
     );
   }

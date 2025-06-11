@@ -590,7 +590,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         child: Image.asset(
                           'assets/chair.png',
                           width: 907 * cScale,
-                          height: 1209 * cScale,
+                          height: 1209 * cScale ,
                           fit: BoxFit.cover,
                         ),
                       ),
@@ -599,7 +599,7 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         left: (38 + 40) * cScale,
                         top: 25 * cScale,
                         child: Text(
-                          '3D SIMULATOR',
+                          'PATTERN EDITOR',
                           style: TextStyle(
                             fontFamily: 'Acumin Pro Wide',
                             fontWeight: FontWeight.w700,
@@ -644,10 +644,10 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                           ],
                         ),
                       ),
-                      // Dynamic bladder buttons (5x2 grid)
+                      // Dynamic bladder buttons (2 columns, vertical pairs)
                       ...List.generate(numBladders, (i) {
-                        final col = i < 5 ? 0 : 1;
-                        final row = i % 5;
+                        final col = i % 2; // 0 or 1
+                        final row = i ~/ 2; // 0,1,2,3...
                         final left = 385 + col * 113;
                         final top = 200 + row * 62;
                         return _buildBladderButton(i, cScale, left * cScale, top * cScale);
@@ -761,21 +761,15 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                 left: 38 * cScale,
                 top: 746 * cScale,
                 child: Container(
-                  width: 1919 * cScale,
-                  height: 349 * cScale,
-                  child: DottedCard(
-                    borderRadius: 18 * cScale,
-                    child: Padding(
-                      padding: EdgeInsets.all(size.width * 0.012 * cScale),
-                      child: PatternSummary(
-                        size: Size(size.width * cScale, size.height * cScale),
-                        steps: steps,
-                        onDeleteStep: _deleteStep,
-                        onEditStep: _editStep,
-                        scale: cScale,
-                        editingIndex: editingIndex,
-                      ),
-                    ),
+                  width: (1619 + 230) * cScale, // Pattern Editor width + Action Buttons width
+                  height: (steps.length * 52 * cScale + 200 * cScale).clamp(400 * cScale, 900 * cScale),
+                  child: PatternSummary(
+                    size: Size((1619 + 230) * cScale, (steps.length * 52 * cScale + 200 * cScale).clamp(400 * cScale, 900 * cScale)),
+                    steps: steps,
+                    onDeleteStep: _deleteStep,
+                    onEditStep: _editStep,
+                    scale: cScale,
+                    editingIndex: editingIndex,
                   ),
                 ),
               ),

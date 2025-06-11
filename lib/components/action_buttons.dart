@@ -112,7 +112,7 @@ class ActionButtons extends StatelessWidget {
     );
   }
 
-  String get addStepButtonText => isEditing ? 'CONFIRM MODIFICATION' : 'ADD STEP';
+  String get addStepButtonText => isEditing ? 'CONFIRM' : 'ADD STEP';
 
   @override
   Widget build(BuildContext context) {
@@ -151,6 +151,10 @@ class ActionButtons extends StatelessWidget {
                 _buildButton(addStepButtonText, onAddStep, background: Colors.white.withOpacity(0.1), scale: s),
                 SizedBox(height: 21 * s),
                 _buildButton('SIMULATE', onSimulate, background: const Color(0x1A00FFFF), scale: s),
+                SizedBox(height: 21 * s),
+                _buildButton('SAVE', () {}, background: const Color(0x1A00FF00), scale: s),
+                SizedBox(height: 21 * s),
+                _buildButton('CHECK STEP', () {}, background: const Color(0x1AFFFF00), scale: s),
                 SizedBox(height: 21 * s),
                 _buildButton('EXPORT', onExport, background: const Color(0x1A00FFFF), scale: s),
                 SizedBox(height: 21 * s),

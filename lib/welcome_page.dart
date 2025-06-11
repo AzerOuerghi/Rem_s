@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'components/rem_logo.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -13,124 +14,129 @@ class WelcomePage extends StatelessWidget {
     final double dotBorder = 1.2;
 
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
-        children: [
-          // Background image
-          Positioned.fill(
-            child: Image.asset(
-              'assets/bg.png',
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Optional: overlay for darkening
-          Positioned.fill(
-            child: Container(
-              color: Colors.black.withOpacity(0.35),
-            ),
-          ),
-          // Main content
-          SafeArea(
-            child: Column(
-              children: [
-                SizedBox(height: size.height * 0.04),
-                Text(
-                  'REM STUDIO',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: size.width * 0.032,
-                    fontWeight: FontWeight.w300,
-                    letterSpacing: 2,
-                    fontFamily: 'Montserrat',
-                  ),
-                  textAlign: TextAlign.center,
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final double cScale = (constraints.maxWidth / 375).clamp(0.5, 1.0);
+          return Stack(
+            children: [
+              // Background image
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/bg.png',
+                  fit: BoxFit.cover,
                 ),
-                const Spacer(),
-                Center(
-                  child: Stack(
-                    children: [
-                      Container(
-                        width: size.width * 0.82,
-                        height: size.height * 0.52,
-                        decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.82),
-                          borderRadius: BorderRadius.circular(cardRadius),
-                          border: Border.all(color: Colors.white.withOpacity(0.08), width: cardBorderWidth),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _WelcomeButton(
-                                  label: 'NEW PROJECT',
-                                  onTap: () => Navigator.pushReplacementNamed(context, '/new_project'),
-                                  size: size,
-                                ),
-                                SizedBox(width: size.width * 0.03),
-                                _WelcomeButton(
-                                  label: 'LOAD PROJECT',
-                                  onTap: () {},
-                                  size: size,
-                                ),
-                                SizedBox(width: size.width * 0.03),
-                                _WelcomeButton(
-                                  label: 'IMPORT PATTERN',
-                                  onTap: () {},
-                                  size: size,
-                                ),
-                                SizedBox(width: size.width * 0.03),
-                                _WelcomeButton(
-                                  label: 'TEMPLATES',
-                                  onTap: () {},
-                                  size: size,
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      // Corner dots
-                      Positioned(
-                        left: 8, top: 8,
-                        child: _CornerDot(dotRadius, dotBorder),
-                      ),
-                      Positioned(
-                        right: 8, top: 8,
-                        child: _CornerDot(dotRadius, dotBorder),
-                      ),
-                      Positioned(
-                        left: 8, bottom: 8,
-                        child: _CornerDot(dotRadius, dotBorder),
-                      ),
-                      Positioned(
-                        right: 8, bottom: 8,
-                        child: _CornerDot(dotRadius, dotBorder),
-                      ),
-                    ],
-                  ),
+              ),
+              // Optional: overlay for darkening
+              Positioned.fill(
+                child: Container(
+                  color: Colors.black.withOpacity(0.35),
                 ),
-                const Spacer(),
-                Padding(
-                  padding: EdgeInsets.only(bottom: size.height * 0.02),
-                  child: Center(
-                    child: Text(
-                      'FORVIA',
+              ),
+              RemLogo(scale: cScale),
+              // Main content
+              SafeArea(
+                child: Column(
+                  children: [
+                    SizedBox(height: size.height * 0.04),
+                    Text(
+                      'REM STUDIO',
                       style: TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: size.width * 0.018,
+                        fontSize: size.width * 0.032,
+                        fontWeight: FontWeight.w300,
                         letterSpacing: 2,
                         fontFamily: 'Montserrat',
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                  ),
+                    const Spacer(),
+                    Center(
+                      child: Stack(
+                        children: [
+                          Container(
+                            width: size.width * 0.82,
+                            height: size.height * 0.52,
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.82),
+                              borderRadius: BorderRadius.circular(cardRadius),
+                              border: Border.all(color: Colors.white.withOpacity(0.08), width: cardBorderWidth),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    _WelcomeButton(
+                                      label: 'NEW PROJECT',
+                                      onTap: () => Navigator.pushReplacementNamed(context, '/new_project'),
+                                      size: size,
+                                    ),
+                                    SizedBox(width: size.width * 0.03),
+                                    _WelcomeButton(
+                                      label: 'LOAD PROJECT',
+                                      onTap: () {},
+                                      size: size,
+                                    ),
+                                    SizedBox(width: size.width * 0.03),
+                                    _WelcomeButton(
+                                      label: 'IMPORT PATTERN',
+                                      onTap: () {},
+                                      size: size,
+                                    ),
+                                    SizedBox(width: size.width * 0.03),
+                                    _WelcomeButton(
+                                      label: 'TEMPLATES',
+                                      onTap: () {},
+                                      size: size,
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Corner dots
+                          Positioned(
+                            left: 8, top: 8,
+                            child: _CornerDot(dotRadius, dotBorder),
+                          ),
+                          Positioned(
+                            right: 8, top: 8,
+                            child: _CornerDot(dotRadius, dotBorder),
+                          ),
+                          Positioned(
+                            left: 8, bottom: 8,
+                            child: _CornerDot(dotRadius, dotBorder),
+                          ),
+                          Positioned(
+                            right: 8, bottom: 8,
+                            child: _CornerDot(dotRadius, dotBorder),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    Padding(
+                      padding: EdgeInsets.only(bottom: size.height * 0.02),
+                      child: Center(
+                        child: Text(
+                          'FORVIA',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: size.width * 0.018,
+                            letterSpacing: 2,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
