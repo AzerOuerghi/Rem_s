@@ -119,7 +119,7 @@ class ActionButtons extends StatelessWidget {
     final s = scale;
     return Container(
       width: 189 * s,
-      height: 598 * s,
+      height: 500 * s,
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(18 * s),

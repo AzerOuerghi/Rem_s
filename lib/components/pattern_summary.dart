@@ -25,11 +25,18 @@ class PatternSummary extends StatefulWidget {
 
 class _PatternSummaryState extends State<PatternSummary> {
   int? numBladders;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _loadConfig();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadConfig() async {
@@ -44,7 +51,7 @@ class _PatternSummaryState extends State<PatternSummary> {
     final scale = widget.scale;
     // Use available width, clamp to max 1921px
     final double width = widget.size.width.clamp(0, 1921 * scale);
-    final double height = 360 * scale;
+    final double height = 300 * scale;
     // Adjust header and content widths to fit inside available width
     final double margin = 110 * scale;
     final double headerHeight = 52 * scale;
@@ -203,95 +210,155 @@ class _PatternSummaryState extends State<PatternSummary> {
           ),
 
           // Table rows (IDs and values)
-          ...List.generate(widget.steps.length, (rowIdx) {
-            final step = widget.steps[rowIdx];
-            final bladders = step['bladders'] as List;
-            final rowTop = (idTop + idBoxHeight + 20 * scale) + rowIdx * (idBoxHeight + 10 * scale);
-            return Stack(
-              children: [
-                // ID cell
-                Positioned(
-                  left: idLeft,
-                  top: rowTop,
-                  child: Container(
-                    width: idBoxWidth,
-                    height: idBoxHeight,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8 * scale),
-                    ),
-                    child: Center(
-                      child: Text(
-                        step['step_id'].toString(),
-                        style: TextStyle(
-                          fontFamily: 'Poppins',
-                          fontWeight: FontWeight.w700,
-                          fontSize: 16 * scale,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                // Bladder value cells
-                ...List.generate(
-                  bladderCount,
-                  (i) => Positioned(
-                    left: bldStartLeft + i * (bldBoxWidth + 8 * scale),
-                    top: rowTop,
-                    child: Container(
-                      width: bldBoxWidth,
-                      height: bldBoxHeight,
-                      decoration: BoxDecoration(
-                        color: bladders[i]['value'] != ''
-                            ? const Color.fromRGBO(80, 165, 50, 0.2)
-                            : Colors.white.withOpacity(0.1),
-                        border: Border.all(color: const Color(0xFF85E264)),
-                        borderRadius: BorderRadius.circular(8 * scale),
-                      ),
-                      child: Center(
-                        child: Text(
-                          bladders[i]['value'] ?? '',
-                          style: TextStyle(
-                            fontFamily: 'Poppins',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16 * scale,
-                            color: Colors.white,
+          Positioned(
+            left: 0,
+            top: idTop + idBoxHeight + 10 * scale,
+            right: 0,
+            bottom: 10 * scale,
+            child: ShaderMask(
+              shaderCallback: (Rect rect) {
+                return LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.purple.withAlpha(0),
+                    Colors.purple,
+                  ],
+                  stops: [0.95, 1.0],
+                ).createShader(rect);
+              },
+              blendMode: BlendMode.dstOut,
+              child: RawScrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                thumbColor: Colors.white.withOpacity(0.3),
+                trackColor: Colors.white.withOpacity(0.1),
+                radius: Radius.circular(20),
+                thickness: 8 * scale,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  child: Padding(
+                    padding: EdgeInsets.only(right: 16 * scale),
+                    child: Column(
+                      children: List.generate(widget.steps.length, (rowIdx) {
+                        final step = widget.steps[rowIdx];
+                        final bladders = step['bladders'] as List;
+                        final isEditing = widget.editingIndex == rowIdx;
+                        return Container(
+                          margin: EdgeInsets.only(bottom: 10 * scale),
+                          height: idBoxHeight,
+                          child: Stack(
+                            children: [
+                              if (isEditing)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.yellow.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8 * scale),
+                                      border: Border.all(
+                                        color: Colors.yellow.withOpacity(0.3),
+                                        width: 2 * scale,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              // ID cell with modified decoration for editing state
+                              Positioned(
+                                left: idLeft,
+                                top: 0,
+                                child: Container(
+                                  width: idBoxWidth,
+                                  height: idBoxHeight,
+                                  decoration: BoxDecoration(
+                                    color: isEditing 
+                                        ? Colors.yellow.withOpacity(0.2)
+                                        : Colors.white.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8 * scale),
+                                    border: isEditing ? Border.all(
+                                      color: Colors.yellow.withOpacity(0.5),
+                                      width: 1 * scale,
+                                    ) : null,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      step['step_id'].toString(),
+                                      style: TextStyle(
+                                        fontFamily: 'Poppins',
+                                        fontWeight: isEditing ? FontWeight.w900 : FontWeight.w700,
+                                        fontSize: 16 * scale,
+                                        color: isEditing ? Colors.yellow : Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Bladder value cells
+                              ...List.generate(
+                                bladderCount,
+                                (i) => Positioned(
+                                  left: bldStartLeft + i * (bldBoxWidth + 8 * scale),
+                                  top: 0,
+                                  child: Container(
+                                    width: bldBoxWidth,
+                                    height: bldBoxHeight,
+                                    decoration: BoxDecoration(
+                                      color: bladders[i]['value'] != ''
+                                          ? const Color.fromRGBO(80, 165, 50, 0.2)
+                                          : Colors.white.withOpacity(0.1),
+                                      border: Border.all(color: const Color(0xFF85E264)),
+                                      borderRadius: BorderRadius.circular(8 * scale),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        bladders[i]['value'] ?? '',
+                                        style: TextStyle(
+                                          fontFamily: 'Poppins',
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16 * scale,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // INT, FREQ, DUR cells
+                              Positioned(
+                                left: metricsLeft,
+                                top: 0,
+                                child: Row(
+                                  children: [
+                                    _metricBox(step['intensity'].toString(), metricBoxWidth, metricBoxHeight, scale),
+                                    SizedBox(width: metricBoxGap),
+                                    _metricBox(step['frequency'].toString(), metricBoxWidth, metricBoxHeight, scale),
+                                    SizedBox(width: metricBoxGap),
+                                    _metricBox((step['duration_ms'] / 1000).toStringAsFixed(2), metricBoxWidth, metricBoxHeight, scale),
+                                  ],
+                                ),
+                              ),
+                              // Edit/Delete buttons
+                              Positioned(
+                                left: metricsLeft + 3 * (metricBoxWidth + metricBoxGap) + 20 * scale,
+                                top: 0,
+                                child: Row(
+                                  children: [
+                                    _iconButton(Icons.edit, Colors.white, () => widget.onEditStep(rowIdx), scale),
+                                    SizedBox(width: 10 * scale),
+                                    _iconButton(Icons.delete, Colors.red, () => widget.onDeleteStep(rowIdx), scale),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                   ),
                 ),
-                // INT, FREQ, DUR cells
-                Positioned(
-                  left: metricsLeft,
-                  top: rowTop,
-                  child: Row(
-                    children: [
-                      _metricBox(step['intensity'].toString(), metricBoxWidth, metricBoxHeight, scale),
-                      SizedBox(width: metricBoxGap),
-                      _metricBox(step['frequency'].toString(), metricBoxWidth, metricBoxHeight, scale),
-                      SizedBox(width: metricBoxGap),
-                      _metricBox((step['duration_ms'] / 1000).toStringAsFixed(2), metricBoxWidth, metricBoxHeight, scale),
-                    ],
-                  ),
-                ),
-                // Edit/Delete buttons
-                Positioned(
-                  left: metricsLeft + 3 * (metricBoxWidth + metricBoxGap) + 20 * scale,
-                  top: rowTop,
-                  child: Row(
-                    children: [
-                      _iconButton(Icons.edit, Colors.white, () => widget.onEditStep(rowIdx), scale),
-                      SizedBox(width: 10 * scale),
-                      _iconButton(Icons.delete, Colors.red, () => widget.onDeleteStep(rowIdx), scale),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          }),
+              ),
+            ),
+          ),
         ],
       ),
     );

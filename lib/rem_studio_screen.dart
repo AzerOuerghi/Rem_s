@@ -37,6 +37,8 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
   String? projectName;
   String? projectDescription;
 
+  bool isBackrestView = true; // Add this state variable
+
   @override
   void initState() {
     super.initState();
@@ -488,6 +490,39 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
     );
   }
 
+  // Add this helper method
+  Widget _buildToggleSwitch(double scale) {
+    return GestureDetector(
+      onTap: () => setState(() => isBackrestView = !isBackrestView),
+      child: Container(
+        width: 60 * scale,
+        height: 25 * scale,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(18 * scale),
+        ),
+        child: Stack(
+          children: [
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              left: (isBackrestView ? 4 : 39) * scale,
+              top: 4 * scale,
+              child: Container(
+                width: 17 * scale,
+                height: 17 * scale,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18 * scale),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
@@ -569,13 +604,13 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                 ),
               ),
 
-              // 3D Simulator section
+              // Pattern Editor section
               Positioned(
                 left: 38 * cScale,
                 top: 132 * cScale,
                 child: Container(
                   width: 1619 * cScale,
-                  height: 598 * cScale,
+                  height: 500 * cScale, // Reduced from 598
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(18 * cScale),
@@ -583,35 +618,69 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                   ),
                   child: Stack(
                     children: [
-                      // Chair image
-                      Positioned(
-                        left: 0,
-                        top: -177 * cScale,
+                      // Chair image with animation
+                      AnimatedPositioned(
+                        duration: const Duration(milliseconds: 500),
+                        curve: Curves.easeInOut,
+                        left: -95 * cScale,
+                        top: isBackrestView ? -200 * cScale : -500 * cScale, // Adjusted to show full bottom
                         child: Image.asset(
                           'assets/chair.png',
-                          width: 907 * cScale,
-                          height: 1209 * cScale ,
-                          fit: BoxFit.cover,
+                          width: 1100 * cScale,
+                          height: 1100 * cScale, // Increased height to show full image
+                          fit: BoxFit.contain, // Changed to contain to show full image
                         ),
                       ),
-                      // 3D SIMULATOR title
+                      // PATTERN EDITOR title and toggle
                       Positioned(
-                        left: (38 + 40) * cScale,
+                        left: ( 40) * cScale,
                         top: 25 * cScale,
-                        child: Text(
-                          'PATTERN EDITOR',
-                          style: TextStyle(
-                            fontFamily: 'Acumin Pro Wide',
-                            fontWeight: FontWeight.w700,
-                            fontSize: 16 * cScale,
-                            color: Colors.white,
-                            shadows: [
-                              Shadow(
-                                color: Color(0xA6FFFFFF),
-                                blurRadius: 8 * cScale,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'PATTERN EDITOR',
+                              style: TextStyle(
+                                fontFamily: 'Acumin Pro Wide',
+                                fontWeight: FontWeight.w700,
+                                fontSize: 16 * cScale,
+                                color: Colors.white,
+                                shadows: [
+                                  Shadow(
+                                    color: Color(0xA6FFFFFF),
+                                    blurRadius: 8 * cScale,
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
+                            ),
+                            SizedBox(height: 20 * cScale),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'BACKREST',
+                                  style: TextStyle(
+                                    fontFamily: 'Acumin Pro Wide',
+                                    fontSize: 12 * cScale,
+                                    fontWeight: FontWeight.w700,
+                                    color: isBackrestView ? Colors.white : Colors.white.withOpacity(0.5),
+                                  ),
+                                ),
+                                SizedBox(width: 12 * cScale),
+                                _buildToggleSwitch(cScale),
+                                SizedBox(width: 12 * cScale),
+                                Text(
+                                  'CUSHION',
+                                  style: TextStyle(
+                                    fontFamily: 'Acumin Pro Wide',
+                                    fontSize: 12 * cScale,
+                                    fontWeight: FontWeight.w700,
+                                    color: !isBackrestView ? Colors.white : Colors.white.withOpacity(0.5),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
                       // Adjustment type selector
@@ -649,13 +718,13 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                         final col = i % 2; // 0 or 1
                         final row = i ~/ 2; // 0,1,2,3...
                         final left = 385 + col * 113;
-                        final top = 200 + row * 62;
+                        final top = 200 + row * 52; // Reduced spacing
                         return _buildBladderButton(i, cScale, left * cScale, top * cScale);
                       }),
                       // Sliders: INTENSITY, PULSE FREQUENCY, DURATION/STEP
                       Positioned(
                         left: 841 * cScale,
-                        top: 207 * cScale,
+                        top: 207 * cScale, // Adjusted
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -739,40 +808,41 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
                 ),
               ),
 
-              // Action Buttons section
+              // Action Buttons section - adjusted height
               Positioned(
                 left: 1688 * cScale,
                 top: 132 * cScale,
-                child: Transform.scale(
-                  scale: cScale,
-                  alignment: Alignment.topLeft,
-                  child: ActionButtons(
-                    onAddStep: _addStep,
-                    onClearAll: _clearAllSteps,
-                    onExport: _exportSteps,
-                    onSimulate: _showSimulator,
-                    isEditing: editingIndex != null,
+   // Match pattern editor height
+                  child: Transform.scale(
+                    scale: cScale,
+                    alignment: Alignment.topLeft,
+                    child: ActionButtons(
+                      onAddStep: _addStep,
+                      onClearAll: _clearAllSteps,
+                      onExport: _exportSteps,
+                      onSimulate: _showSimulator,
+                      isEditing: editingIndex != null,
+                    ),
                   ),
-                ),
+                
               ),
 
-              // Pattern Summary section
+              // Pattern Summary section - adjusted position and height
               Positioned(
                 left: 38 * cScale,
-                top: 746 * cScale,
-                child: Container(
-                  width: (1619 + 230) * cScale, // Pattern Editor width + Action Buttons width
-                  height: (steps.length * 52 * cScale + 200 * cScale).clamp(400 * cScale, 900 * cScale),
+                top: 652 * cScale, // Moved up (was 746)
+  
                   child: PatternSummary(
-                    size: Size((1619 + 230) * cScale, (steps.length * 52 * cScale + 200 * cScale).clamp(400 * cScale, 900 * cScale)),
+                    size: Size((1619 + 230) * cScale, 50 * cScale),
                     steps: steps,
                     onDeleteStep: _deleteStep,
                     onEditStep: _editStep,
                     scale: cScale,
                     editingIndex: editingIndex,
                   ),
-                ),
+                
               ),
+              // Remove the call to _buildViewToggle
             ],
           );
         },
@@ -787,37 +857,54 @@ class _RemStudioScreenState extends State<RemStudioScreen> {
     return Positioned(
       left: left,
       top: top,
-      child: GestureDetector(
-        onTap: () => _handleBladderTap(index),
-        child: Container(
-          width: 72 * scale,
-          height: 42 * scale,
-          decoration: BoxDecoration(
-            color: hasValue ? const Color.fromRGBO(80,165,50,0.6) :
-                   isActive ? Colors.white.withOpacity(0.2) :
-                   Colors.white.withOpacity(0.1),
-            border: Border.all(
-              color: isActive ? Colors.white : const Color(0xFF85E264),
-              width: isActive ? 2 * scale : 1 * scale,
+      child: AnimatedOpacity(
+        duration: Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+        opacity: isBackrestView ? 1.0 : 0.0,
+        child: GestureDetector(
+          onTap: () => _handleBladderTap(index),
+          child: TweenAnimationBuilder(
+            duration: Duration(milliseconds: 400),
+            tween: Tween<double>(
+              begin: isBackrestView ? 0.0 : 1.0,
+              end: isBackrestView ? 1.0 : 0.0,
             ),
-            borderRadius: BorderRadius.circular(12 * scale),
-            boxShadow: isActive ? [
-              BoxShadow(
-                color: Colors.white.withOpacity(0.5),
-                blurRadius: 6 * scale,
-              )
-            ] : null,
-          ),
-          child: Center(
-            child: Text(
-              hasValue ? bladderStates[index] : '${index + 1}',
-              style: TextStyle(
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w700,
-                fontSize: 16 * scale,
-                color: Colors.white,
-              ),
-            ),
+            builder: (context, double value, child) {
+              return Transform.translate(
+                offset: Offset(0, 20 * (1 - value)),
+                child: Container(
+                  width: 72 * scale,
+                  height: 42 * scale,
+                  decoration: BoxDecoration(
+                    color: hasValue ? const Color.fromRGBO(80,165,50,0.6) :
+                           isActive ? Colors.white.withOpacity(0.2 * value) :
+                           Colors.white.withOpacity(0.1 * value),
+                    border: Border.all(
+                      color: isActive ? Colors.white : const Color(0xFF85E264),
+                      width: isActive ? 2 * scale : 1 * scale,
+                    ),
+                    borderRadius: BorderRadius.circular(12 * scale),
+                    boxShadow: isActive ? [
+                      BoxShadow(
+                        color: Colors.white.withOpacity(0.5 * value),
+                        blurRadius: 6 * scale,
+                      )
+                    ] : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      hasValue ? bladderStates[index] : '${index + 1}',
+                      style: TextStyle(
+                        fontFamily: 'Poppins',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16 * scale,
+                        color: Colors.white.withOpacity(value),
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
